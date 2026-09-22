@@ -1,0 +1,54 @@
+/* Paleta i typografia: docs/01_WYMAGANIA.md UI-04, UI-05. Rozmiary tekstu wyłącznie w rem. */
+:root {
+  --kolor-tekst: #0B2545;
+  --kolor-tlo: #FFFFFF;
+  --kolor-akcent: #B33A00;
+  --kolor-fokus: #B33A00;
+  --bs-body-color: var(--kolor-tekst);
+  --bs-body-bg: var(--kolor-tlo);
+  --bs-link-color: var(--kolor-tekst);
+  --bs-link-color-rgb: 11, 37, 69;
+  --bs-link-hover-color: var(--kolor-akcent);
+  --bs-link-hover-color-rgb: 179, 58, 0;
+}
+
+html {
+  font-size: 112.5%; /* 18 px przy domyślnych ustawieniach przeglądarki */
+}
+
+body {
+  color: var(--kolor-tekst);
+  background-color: var(--kolor-tlo);
+  line-height: 1.6;
+}
+
+a {
+  color: var(--kolor-tekst);
+  text-decoration: underline;
+}
+
+/* Widoczny fokus na każdym elemencie — nigdy nie usuwamy obrysu (CLAUDE.md, zasada 4). */
+:focus-visible {
+  outline: 3px solid var(--kolor-fokus);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.link-pomin {
+  position: absolute;
+  left: -100vw;
+  top: 0;
+  padding: 0.5rem 1rem;
+  background: var(--kolor-tlo);
+  color: var(--kolor-tekst);
+  z-index: 1000;
+}
+
+.link-pomin:focus {
+  left: 0.5rem;
+}
+
+.nazwa-serwisu {
+  font-weight: 700;
+  font-size: 1.25rem;
+}

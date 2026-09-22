@@ -1,0 +1,13 @@
+@model ErrorViewModel
+@{
+    ViewData["Title"] = "Błąd";
+}
+
+<h1>Wystąpił błąd</h1>
+<p>Nie udało się wyświetlić tej strony. Spróbuj ponownie za chwilę albo
+   <a asp-controller="Home" asp-action="Index">wróć na stronę główną przewodnika</a>.</p>
+
+@if (Model.ShowRequestId)
+{
+    <p>Numer zgłoszenia błędu: <code>@Model.RequestId</code></p>
+}

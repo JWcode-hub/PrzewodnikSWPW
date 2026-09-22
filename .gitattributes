@@ -1,0 +1,6 @@
+# Pliki tekstowe zawsze z końcami linii LF — bez ostrzeżeń CRLF na Windows
+* text=auto eol=lf
+*.pdf  binary
+*.docx binary
+*.png  binary
+*.svg  text

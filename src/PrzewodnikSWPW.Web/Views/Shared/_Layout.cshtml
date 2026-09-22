@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] – Multimedialny przewodnik po Uczelni – SWPW</title>
+    <script type="importmap"></script>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    <a href="#tresc" class="link-pomin">Przejdź do treści głównej</a>
+
+    <header class="border-bottom mb-3">
+        <nav class="container py-2" aria-label="Nawigacja główna">
+            <a class="nazwa-serwisu" asp-controller="Home" asp-action="Index">Multimedialny przewodnik po Uczelni</a>
+        </nav>
+    </header>
+
+    <main id="tresc" tabindex="-1" class="container pb-3">
+        @RenderBody()
+    </main>
+
+    <footer class="border-top mt-4">
+        <div class="container py-3">
+            <p class="mb-0">Szkoła Wyższa im. Pawła Włodkowica w Płocku</p>
+        </div>
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
