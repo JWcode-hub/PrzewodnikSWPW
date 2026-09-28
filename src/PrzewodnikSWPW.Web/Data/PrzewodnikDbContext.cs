@@ -250,6 +250,11 @@ public class PrzewodnikDbContext(DbContextOptions<PrzewodnikDbContext> options) 
                 // Dostępność wymuszona schematem: zdjęcie informacyjne musi mieć sensowny alt.
                 t.HasCheckConstraint("CK_Zdjecie_Alt",
                     "[CzyDekoracyjne] = 1 OR LEN(LTRIM(RTRIM([TekstAlternatywny]))) >= 5");
+                // D-09: pochodzenie każdego pliku (WN-39); wymiary oba albo żaden.
+                t.HasCheckConstraint("CK_Zdjecie_Prawa",
+                    "LEN(LTRIM(RTRIM([Zrodlo]))) > 0 AND LEN(LTRIM(RTRIM([Licencja]))) > 0");
+                t.HasCheckConstraint("CK_Zdjecie_Wymiary",
+                    "([Szerokosc] IS NULL AND [Wysokosc] IS NULL) OR ([Szerokosc] > 0 AND [Wysokosc] > 0)");
             });
         });
 

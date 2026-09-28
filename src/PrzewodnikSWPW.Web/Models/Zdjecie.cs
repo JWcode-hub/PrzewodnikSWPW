@@ -20,6 +20,10 @@ public class Zdjecie : IValidatableObject
     public int? SalaId { get; set; }
     public Sala? Sala { get; set; }
 
+    /// <summary>
+    /// Rdzeń nazwy nadany przez serwer, bez rozszerzenia, np. „zdjecia/3f2a…” (D-09). Pliki wariantów:
+    /// <c>{rdzeń}-{szerokość}.webp</c> i <c>.jpg</c> w katalogu <c>wwwroot/media</c>.
+    /// </summary>
     [Required(ErrorMessage = Komunikaty.Wymagane)]
     [StringLength(400, ErrorMessage = Komunikaty.MaksDlugosc)]
     [Display(Name = "Ścieżka pliku")]
@@ -37,13 +41,21 @@ public class Zdjecie : IValidatableObject
     [Display(Name = "Opis rozszerzony")]
     public string? OpisRozszerzony { get; set; }
 
+    /// <summary>Kto zrobił zdjęcie albo skąd pochodzi — wymagane przy każdym pliku (WN-39, P-06, D-09).</summary>
+    [Required(ErrorMessage = Komunikaty.Wymagane)]
     [StringLength(200, ErrorMessage = Komunikaty.MaksDlugosc)]
     [Display(Name = "Źródło zdjęcia")]
-    public string? Zrodlo { get; set; }
+    public string Zrodlo { get; set; } = string.Empty;
 
+    [Required(ErrorMessage = Komunikaty.Wymagane)]
     [StringLength(200, ErrorMessage = Komunikaty.MaksDlugosc)]
     [Display(Name = "Licencja")]
-    public string? Licencja { get; set; }
+    public string Licencja { get; set; } = string.Empty;
+
+    /// <summary>Wymiary największego wariantu — atrybuty width/height i układ współrzędnych obszarów aktywnych (D-09).</summary>
+    public int? Szerokosc { get; set; }
+
+    public int? Wysokosc { get; set; }
 
     [Range(0, 1000, ErrorMessage = Komunikaty.Zakres)]
     [Display(Name = "Kolejność wyświetlania")]
