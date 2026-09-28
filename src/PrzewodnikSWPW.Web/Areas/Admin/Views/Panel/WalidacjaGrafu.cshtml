@@ -1,51 +1,30 @@
 @model IReadOnlyList<UwagaWalidatora>
 @{
     ViewData["Title"] = "Walidacja grafu";
-    var bledy = Model.Count(u => u.Poziom == PoziomUwagi.Blad);
-    var ostrzezenia = Model.Count - bledy;
-    string Adres(UwagaWalidatora u) => u.Rekord switch
-    {
-        RodzajRekordu.Budynek => Url.Action("Edytuj", "Budynki", new { area = "Admin", id = u.RekordId })!,
-        RodzajRekordu.PunktRuchu => Url.Action("Edytuj", "Punkty", new { area = "Admin", id = u.RekordId })!,
-        _ => Url.Action("Edytuj", "Kierunki", new { area = "Admin", id = u.RekordId })!,
-    };
+    var bledy = Model.Where(u => u.Poziom == PoziomUwagi.Blad).ToList();
+    var ostrzezenia = Model.Where(u => u.Poziom == PoziomUwagi.Ostrzezenie).ToList();
+    var podsumowanie = Model.Count == 0
+        ? "Walidacja zakończona. Graf nie ma uwag."
+        : $"Walidacja zakończona. Znaleziono problemów: {Model.Count}. Błędy krytyczne: {bledy.Count}. Ostrzeżenia: {ostrzezenia.Count}.";
 }
 
 <h1>Walidacja grafu</h1>
-<p>Sprawdzenie danych nawigacji przed wdrożeniem. Błędy sprawiają, że przewodnik poprowadzi źle albo wcale;
+<p>Sprawdzenie danych nawigacji przed wdrożeniem. Błędy krytyczne sprawiają, że przewodnik poprowadzi źle albo wcale;
    ostrzeżenia wymagają decyzji redaktora.</p>
 
-<p class="komunikat @(bledy > 0 ? "komunikat--blad" : "komunikat--sukces")" data-oglos="Błędy: @bledy, ostrzeżenia: @ostrzezenia.">
-    <strong>Błędy: @bledy. Ostrzeżenia: @ostrzezenia.</strong>
-    @if (Model.Count == 0) { <text>Graf nie ma uwag.</text> }
+@* Tekst widoczny bez JavaScriptu; site.js przenosi go do jedynego obszaru aria-live strony (#komunikaty). *@
+<p class="komunikat @(bledy.Count > 0 ? "komunikat--blad" : "komunikat--sukces")" data-oglos="@podsumowanie">
+    <strong>@podsumowanie</strong>
 </p>
 
-@if (Model.Count > 0)
+@if (bledy.Count > 0)
 {
-    <div class="tabela-przewijana" tabindex="0" role="region" aria-label="Uwagi walidatora — tabela">
-        <table class="table tabela-admina">
-            <caption>Uwagi walidatora (@Model.Count) — najpierw błędy</caption>
-            <thead>
-                <tr>
-                    <th scope="col">Poziom</th>
-                    <th scope="col">Rekord</th>
-                    <th scope="col">Reguła</th>
-                    <th scope="col">Problem</th>
-                    <th scope="col">Jak naprawić</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var u in Model)
-                {
-                    <tr>
-                        <td>@(u.Poziom == PoziomUwagi.Blad ? "Błąd" : "Ostrzeżenie")</td>
-                        <th scope="row"><a href="@Adres(u)">Edytuj @u.OpisRekordu</a></th>
-                        <td>@u.Regula</td>
-                        <td>@u.Tresc</td>
-                        <td>@u.Podpowiedz</td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    </div>
+    <h2 id="bledy-krytyczne">Błędy krytyczne (@bledy.Count)</h2>
+    <partial name="_TabelaUwag" model="@(("Błędy krytyczne", bledy))" />
+}
+
+@if (ostrzezenia.Count > 0)
+{
+    <h2 id="ostrzezenia">Ostrzeżenia (@ostrzezenia.Count)</h2>
+    <partial name="_TabelaUwag" model="@(("Ostrzeżenia", ostrzezenia))" />
 }

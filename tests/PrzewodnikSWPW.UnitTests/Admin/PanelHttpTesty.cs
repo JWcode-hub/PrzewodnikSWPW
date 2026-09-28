@@ -186,7 +186,10 @@ public class PanelHttpTesty(AplikacjaFixture app)
         var html = await klient.GetStringAsync("/admin/walidacja-grafu");
 
         Assert.Contains("<h1>Walidacja grafu</h1>", html);
-        Assert.Matches("Błędy: \\d+\\. Ostrzeżenia: \\d+\\.", html);
+        Assert.Matches("data-oglos=\"Walidacja zakończona\\. Znaleziono problemów: \\d+\\. Błędy krytyczne: \\d+\\. Ostrzeżenia: \\d+\\.\"", html);
+        Assert.Contains("<th scope=\"col\">Jak naprawić</th>", html);
+        // „Popraw” z ukrytym dopowiedzeniem — nazwa linku zrozumiała poza tabelą.
+        Assert.Matches("<a href=\"/admin/punkty/\\d+/edytuj\">Popraw<span class=\"visually-hidden\"> punkt A-0-P08</span></a>", html);
         Assert.Matches("<a[^>]*aria-current=\"page\"[^>]*>Walidacja grafu</a>", html);
         Assert.Single(System.Text.RegularExpressions.Regex.Matches(html, "aria-current=\"page\"")); // „Panel” nie jest drugą bieżącą stroną
     }

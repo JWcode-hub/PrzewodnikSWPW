@@ -13,7 +13,7 @@ public enum PoziomUwagi
     Ostrzezenie,
 }
 
-public enum RodzajRekordu { Budynek, PunktRuchu, Kierunek }
+public enum RodzajRekordu { Budynek, PunktRuchu, Kierunek, Sala }
 
 /// <summary>Jedna uwaga walidatora z podpowiedzią, jak ją naprawić, i wskazaniem rekordu do edycji.</summary>
 public sealed record UwagaWalidatora(
@@ -27,13 +27,31 @@ public sealed record UwagaWalidatora(
 
 /// <summary>
 /// Walidator grafu nawigacji (UC-19, WF-25). Reguły są czystymi funkcjami na danych w pamięci —
-/// testowalne bez bazy. Zakres: słowa stronne w opisach punktów (D-06), spójność kierunków
+/// testowalne bez bazy. Zakres: reguły UC-19 (odpowiedniki zapytań kontrolnych z rozdz. 8
+/// <c>docs/sql/01_schemat.sql</c>), słowa stronne w opisach punktów (D-06), spójność kierunków
 /// powrotnych (D-07), wejście główne i osiągalność punktów z niego (D-08).
 /// </summary>
 public sealed partial class WalidatorGrafuService(IAdministracjaRepozytorium repo)
 {
     /// <summary>Różnica wag pary tam–z powrotem, powyżej której zgłaszamy ostrzeżenie (D-07 pkt 3).</summary>
     public const decimal ProgRoznicyWag = 0.5m;
+
+    /// <summary>Odległość, powyżej której krawędź to prawdopodobna pomyłka (UC-19). Twardy limit bazy to 200 m.</summary>
+    public const decimal MaksWagaBezOstrzezenia = 100m;
+
+    /// <summary>Tekst alternatywny krótszy niż tyle znaków jest podejrzany (P-02, zapytanie 8.4). Baza wymusza tylko 5.</summary>
+    public const int MinDlugoscTekstuAlternatywnego = 15;
+
+    /// <summary>Opis głosowy krótszy niż tyle znaków traktujemy jak brak opisu (zapytanie 8.5).</summary>
+    public const int MinDlugoscOpisuGlosowego = 10;
+
+    public const string RegulaSlepyZaulek = "UC-19 ślepy zaułek";
+    public const string RegulaBrakPowrotu = "UC-19 brak pary powrotnej";
+    public const string RegulaWaga = "UC-19 odległość krawędzi";
+    public const string RegulaKonfliktAzymutu = "UC-19 konflikt azymutu";
+    public const string RegulaSalaBezWejscia = "UC-19 sala bez wejścia";
+    public const string RegulaTekstAlternatywny = "UC-19 tekst alternatywny";
+    public const string RegulaOpisGlosowy = "UC-19 opis głosowy";
 
     public const string RegulaSlowaStronne = "D-06 słowa stronne";
     public const string RegulaPowrotWzajemny = "D-07 powrót wzajemny";
@@ -57,18 +75,157 @@ public sealed partial class WalidatorGrafuService(IAdministracjaRepozytorium rep
         var budynki = await repo.Zapytanie<Budynek>().AsNoTracking().ToListAsync(ct);
         var punkty = await repo.Zapytanie<PunktRuchu>().AsNoTracking().Include(p => p.Pietro).ToListAsync(ct);
         var kierunki = await repo.Zapytanie<Kierunek>().AsNoTracking().ToListAsync(ct);
-        return Waliduj(budynki, punkty, kierunki);
+        var sale = await repo.Zapytanie<Sala>().AsNoTracking().ToListAsync(ct);
+        var zdjecia = await repo.Zapytanie<Zdjecie>().AsNoTracking().ToListAsync(ct);
+        return Waliduj(budynki, punkty, kierunki, sale, zdjecia);
     }
 
     /// <summary>Wszystkie reguły; błędy przed ostrzeżeniami.</summary>
-    public static IReadOnlyList<UwagaWalidatora> Waliduj(IReadOnlyList<Budynek> budynki, IReadOnlyList<PunktRuchu> punkty, IReadOnlyList<Kierunek> kierunki) =>
-        SprawdzSlowaStronne(punkty)
+    public static IReadOnlyList<UwagaWalidatora> Waliduj(IReadOnlyList<Budynek> budynki, IReadOnlyList<PunktRuchu> punkty,
+        IReadOnlyList<Kierunek> kierunki, IReadOnlyList<Sala>? sale = null, IReadOnlyList<Zdjecie>? zdjecia = null) =>
+        SprawdzSlepeZaulki(punkty, kierunki)
+            .Concat(SprawdzParyPowrotne(punkty, kierunki))
+            .Concat(SprawdzWagi(punkty, kierunki))
+            .Concat(SprawdzKonfliktyAzymutow(punkty, kierunki))
+            .Concat(SprawdzWejsciaSal(sale ?? []))
+            .Concat(SprawdzTekstyAlternatywne(zdjecia ?? [], punkty, sale ?? []))
+            .Concat(SprawdzOpisyGlosowe(punkty))
+            .Concat(SprawdzSlowaStronne(punkty))
             .Concat(SprawdzPowroty(punkty, kierunki))
             .Concat(SprawdzWejsciaIOsiagalnosc(budynki, punkty, kierunki))
             .OrderBy(u => u.Poziom)
             .ThenBy(u => u.Regula)
             .ThenBy(u => u.OpisRekordu)
             .ToList();
+
+    // --- UC-19 -------------------------------------------------------------------------------------------
+
+    /// <summary>Reguła 1 (zapytanie 8.1): aktywny punkt bez żadnej aktywnej krawędzi wychodzącej.</summary>
+    public static IEnumerable<UwagaWalidatora> SprawdzSlepeZaulki(IEnumerable<PunktRuchu> punkty, IReadOnlyList<Kierunek> kierunki)
+    {
+        var zWyjsciem = kierunki.Where(k => k.CzyAktywny).Select(k => k.PunktZrodlowyId).ToHashSet();
+        foreach (var p in punkty.Where(p => p.CzyAktywny && !zWyjsciem.Contains(p.Id)))
+        {
+            yield return new UwagaWalidatora(PoziomUwagi.Blad, RegulaSlepyZaulek,
+                "Z tego punktu nie prowadzi żaden aktywny kierunek — użytkownik wejdzie tu i nie będzie mógł wyjść.",
+                "Dodaj kierunek wychodzący (zwykle powrót do punktu, z którego się tu przychodzi) albo dezaktywuj punkt.",
+                RodzajRekordu.PunktRuchu, p.Id, $"punkt {p.Kod}");
+        }
+    }
+
+    /// <summary>
+    /// Reguła 2 (zapytanie 8.2): aktywna krawędź A→B, do której nie istnieje aktywna krawędź B→A.
+    /// Krawędzie do sal nie mają pary — sala to cel, nie punkt ruchu.
+    /// </summary>
+    public static IEnumerable<UwagaWalidatora> SprawdzParyPowrotne(IEnumerable<PunktRuchu> punkty, IReadOnlyList<Kierunek> kierunki)
+    {
+        var kody = KodyPunktow(punkty);
+        var aktywne = kierunki.Where(k => k.CzyAktywny && k.PunktDocelowyId is not null).ToList();
+        var pary = aktywne.Select(k => (k.PunktZrodlowyId, k.PunktDocelowyId!.Value)).ToHashSet();
+        foreach (var k in aktywne.Where(k => !pary.Contains((k.PunktDocelowyId!.Value, k.PunktZrodlowyId))))
+        {
+            var cel = kody.GetValueOrDefault(k.PunktDocelowyId!.Value, $"#{k.PunktDocelowyId}");
+            yield return new UwagaWalidatora(PoziomUwagi.Blad, RegulaBrakPowrotu,
+                $"Z punktu {cel} nie prowadzi aktywny kierunek z powrotem.",
+                $"Dodaj w punkcie {cel} kierunek o azymucie {Azymuty.Normalizuj(k.Azymut + 180)}° do punktu " +
+                $"{kody.GetValueOrDefault(k.PunktZrodlowyId)} albo aktywuj istniejący. Bez niego użytkownik przejdzie tam, ale nie wróci.",
+                RodzajRekordu.Kierunek, k.Id, OpisKierunku(k, kody));
+        }
+    }
+
+    /// <summary>Reguła 3: waga ≤ 0 (błąd — Dijkstra wymaga wag dodatnich) albo &gt; 100 m (prawdopodobna pomyłka).</summary>
+    public static IEnumerable<UwagaWalidatora> SprawdzWagi(IEnumerable<PunktRuchu> punkty, IReadOnlyList<Kierunek> kierunki)
+    {
+        var kody = KodyPunktow(punkty);
+        foreach (var k in kierunki.Where(k => k.CzyAktywny))
+        {
+            if (k.Waga <= 0)
+            {
+                yield return new UwagaWalidatora(PoziomUwagi.Blad, RegulaWaga,
+                    $"Odległość wynosi {k.Waga} m — musi być większa od zera.",
+                    "Wpisz odległość w metrach zmierzoną na miejscu. Zerowa lub ujemna odległość psuje wyznaczanie najkrótszej trasy.",
+                    RodzajRekordu.Kierunek, k.Id, OpisKierunku(k, kody));
+            }
+            else if (k.Waga > MaksWagaBezOstrzezenia)
+            {
+                yield return new UwagaWalidatora(PoziomUwagi.Ostrzezenie, RegulaWaga,
+                    $"Odległość {NawigacjaService.Metry(k.Waga)} przekracza {MaksWagaBezOstrzezenia:0} metrów.",
+                    "Tak długie przejście między sąsiednimi punktami to zwykle pomyłka (np. centymetry zamiast metrów). " +
+                    "Sprawdź pomiar albo wstaw punkty pośrednie na długim korytarzu.",
+                    RodzajRekordu.Kierunek, k.Id, OpisKierunku(k, kody));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Reguła 4: dwie krawędzie z jednego punktu o tym samym azymucie — przewodnik nie wie, dokąd prowadzi „prosto”.
+    /// Baza ma indeks unikalny (PunktZrodlowyId, Azymut); reguła łapie dane spoza niego (np. import).
+    /// </summary>
+    public static IEnumerable<UwagaWalidatora> SprawdzKonfliktyAzymutow(IEnumerable<PunktRuchu> punkty, IReadOnlyList<Kierunek> kierunki)
+    {
+        var kody = KodyPunktow(punkty);
+        foreach (var grupa in kierunki.GroupBy(k => (k.PunktZrodlowyId, k.Azymut)).Where(g => g.Count() > 1))
+        {
+            foreach (var k in grupa.OrderBy(k => k.Id).Skip(1))
+            {
+                yield return new UwagaWalidatora(PoziomUwagi.Blad, RegulaKonfliktAzymutu,
+                    $"Z punktu {kody.GetValueOrDefault(k.PunktZrodlowyId)} prowadzą {grupa.Count()} kierunki o azymucie {k.Azymut}°.",
+                    "W jedną stronę z punktu może prowadzić tylko jeden kierunek. Popraw azymut tej krawędzi albo ją dezaktywuj.",
+                    RodzajRekordu.Kierunek, k.Id, OpisKierunku(k, kody));
+            }
+        }
+    }
+
+    /// <summary>Reguła 5 (zapytanie 8.3): aktywna sala bez punktu wejściowego — nie da się do niej wyznaczyć trasy.</summary>
+    public static IEnumerable<UwagaWalidatora> SprawdzWejsciaSal(IEnumerable<Sala> sale)
+    {
+        foreach (var s in sale.Where(s => s.CzyAktywna && s.PunktWejsciowyId is null))
+        {
+            yield return new UwagaWalidatora(PoziomUwagi.Blad, RegulaSalaBezWejscia,
+                "Sala nie ma przypisanego punktu wejściowego.",
+                "Wybierz w edycji sali punkt ruchu na korytarzu przed jej drzwiami. Bez niego wyszukiwarka tras nie doprowadzi do tej sali.",
+                RodzajRekordu.Sala, s.Id, $"sala {s.Symbol}");
+        }
+    }
+
+    /// <summary>
+    /// Reguła 7 (zapytanie 8.4, P-02): zdjęcie informacyjne z tekstem alternatywnym krótszym niż 15 znaków.
+    /// Zdjęcia nie mają osobnego formularza — link prowadzi do edycji właściciela (punktu albo sali).
+    /// </summary>
+    public static IEnumerable<UwagaWalidatora> SprawdzTekstyAlternatywne(IEnumerable<Zdjecie> zdjecia, IEnumerable<PunktRuchu> punkty, IEnumerable<Sala> sale)
+    {
+        var kody = KodyPunktow(punkty);
+        var symbole = sale.ToDictionary(s => s.Id, s => s.Symbol);
+        foreach (var z in zdjecia.Where(z => !z.CzyDekoracyjne && (z.TekstAlternatywny ?? "").Trim().Length < MinDlugoscTekstuAlternatywnego))
+        {
+            var (rekord, id, wlasciciel) = z.PunktRuchuId is int punkt
+                ? (RodzajRekordu.PunktRuchu, punkt, $"punktu {kody.GetValueOrDefault(punkt, $"#{punkt}")}")
+                : (RodzajRekordu.Sala, z.SalaId ?? 0, $"sali {symbole.GetValueOrDefault(z.SalaId ?? 0, $"#{z.SalaId}")}");
+            var tekst = (z.TekstAlternatywny ?? "").Trim();
+            yield return new UwagaWalidatora(PoziomUwagi.Ostrzezenie, RegulaTekstAlternatywny,
+                tekst.Length == 0
+                    ? "Zdjęcie informacyjne nie ma tekstu alternatywnego."
+                    : $"Tekst alternatywny „{tekst}” ma {tekst.Length} znaków — za mało, by opisać, co widać na zdjęciu.",
+                $"Opisz treść zdjęcia w co najmniej {MinDlugoscTekstuAlternatywnego} znakach (co na nim widać i po co je pokazujemy). " +
+                "Jeśli zdjęcie niczego nie wnosi, oznacz je jako dekoracyjne.",
+                rekord, id, $"zdjęcie {Path.GetFileName(z.SciezkaPliku)} {wlasciciel}");
+        }
+    }
+
+    /// <summary>Reguła 8 (zapytanie 8.5): aktywny punkt bez opisu głosowego (pusty albo krótszy niż 10 znaków).</summary>
+    public static IEnumerable<UwagaWalidatora> SprawdzOpisyGlosowe(IEnumerable<PunktRuchu> punkty)
+    {
+        foreach (var p in punkty.Where(p => p.CzyAktywny && (p.OpisGlosowy ?? "").Trim().Length < MinDlugoscOpisuGlosowego))
+        {
+            yield return new UwagaWalidatora(PoziomUwagi.Ostrzezenie, RegulaOpisGlosowy,
+                string.IsNullOrWhiteSpace(p.OpisGlosowy)
+                    ? "Punkt nie ma opisu głosowego."
+                    : $"Opis głosowy „{p.OpisGlosowy.Trim()}” jest za krótki, by powiedzieć, gdzie jestem.",
+                "Napisz opis do słuchania: gdzie jestem i co jest wokół, liczby słownie, bez skrótów (06 §2.3). " +
+                "Czytanie na głos korzysta z opisu głosowego, nie z opisu do czytania.",
+                RodzajRekordu.PunktRuchu, p.Id, $"punkt {p.Kod}");
+        }
+    }
 
     // --- D-06 --------------------------------------------------------------------------------------------
 
@@ -94,9 +251,9 @@ public sealed partial class WalidatorGrafuService(IAdministracjaRepozytorium rep
 
     public static IEnumerable<UwagaWalidatora> SprawdzPowroty(IEnumerable<PunktRuchu> punkty, IReadOnlyList<Kierunek> kierunki)
     {
-        var kody = punkty.ToDictionary(p => p.Id, p => p.Kod);
+        var kody = KodyPunktow(punkty);
         var poId = kierunki.ToDictionary(k => k.Id);
-        string Opis(Kierunek k) => $"kierunek {k.Azymut}° z punktu {kody.GetValueOrDefault(k.PunktZrodlowyId, $"#{k.PunktZrodlowyId}")}";
+        string Opis(Kierunek k) => OpisKierunku(k, kody);
 
         foreach (var k in kierunki.Where(k => k.KierunekPowrotnyId is not null))
         {
@@ -188,6 +345,11 @@ public sealed partial class WalidatorGrafuService(IAdministracjaRepozytorium rep
             }
         }
     }
+
+    private static Dictionary<int, string> KodyPunktow(IEnumerable<PunktRuchu> punkty) => punkty.ToDictionary(p => p.Id, p => p.Kod);
+
+    private static string OpisKierunku(Kierunek k, IReadOnlyDictionary<int, string> kody) =>
+        $"kierunek {k.Azymut}° z punktu {kody.GetValueOrDefault(k.PunktZrodlowyId, $"#{k.PunktZrodlowyId}")}";
 
     private static string Skrot(string tekst) => tekst.Length <= 120 ? tekst : tekst[..117] + "…";
 }

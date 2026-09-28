@@ -1,0 +1,38 @@
+@model (string Tytul, List<UwagaWalidatora> Uwagi)
+@{
+    string Adres(UwagaWalidatora u) => u.Rekord switch
+    {
+        RodzajRekordu.Budynek => Url.Action("Edytuj", "Budynki", new { area = "Admin", id = u.RekordId })!,
+        RodzajRekordu.PunktRuchu => Url.Action("Edytuj", "Punkty", new { area = "Admin", id = u.RekordId })!,
+        RodzajRekordu.Sala => Url.Action("Edytuj", "Sale", new { area = "Admin", id = u.RekordId })!,
+        _ => Url.Action("Edytuj", "Kierunki", new { area = "Admin", id = u.RekordId })!,
+    };
+}
+
+<div class="tabela-przewijana" tabindex="0" role="region" aria-label="@Model.Tytul — tabela">
+    <table class="table tabela-admina">
+        <caption>@Model.Tytul (@Model.Uwagi.Count)</caption>
+        <thead>
+            <tr>
+                <th scope="col">Rekord</th>
+                <th scope="col">Reguła</th>
+                <th scope="col">Problem</th>
+                <th scope="col">Jak naprawić</th>
+                <th scope="col">Działanie</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var u in Model.Uwagi)
+            {
+                <tr>
+                    <th scope="row">@u.OpisRekordu</th>
+                    <td>@u.Regula</td>
+                    <td>@u.Tresc</td>
+                    <td>@u.Podpowiedz</td>
+                    @* Widoczne „Popraw” rozwinięte o rekord — nazwa linku zrozumiała poza tabelą (CLAUDE.md zasada 6, WCAG 2.4.4, 2.5.3). *@
+                    <td><a href="@Adres(u)">Popraw<span class="visually-hidden"> @u.OpisRekordu</span></a></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
