@@ -84,8 +84,8 @@ public sealed class NawigacjaService(INawigacjaRepozytorium repozytorium, TimePr
             .ToList();
 
     /// <summary>
-    /// Budynek z piętrami i punktami do wyboru. Punkt startowy: pierwszy punkt parteru według kodu
-    /// (w danych nie ma jeszcze oznaczenia wejścia głównego). <c>null</c>, gdy budynek nie istnieje.
+    /// Budynek z piętrami i punktami do wyboru. Punkt startowy spaceru to wejście główne budynku (D-08);
+    /// bez ustawionego wejścia ekran pokazuje tylko listę punktów. <c>null</c>, gdy budynek nie istnieje.
     /// </summary>
     public async Task<WidokBudynku?> PobierzBudynek(string kodBudynku, CancellationToken ct = default)
     {
@@ -103,7 +103,9 @@ public sealed class NawigacjaService(INawigacjaRepozytorium repozytorium, TimePr
                 .ToList()))
             .ToList();
 
-        var start = (pietra.FirstOrDefault(p => p.Numer == 0) ?? pietra.FirstOrDefault())?.Punkty.FirstOrDefault();
+        var start = budynek.PunktWejsciaGlownego is { CzyAktywny: true } w
+            ? new PunktNaLiscie(AdresMiejsca.Z(budynek.Kod, w.Pietro.Numer, w.Kod), w.Nazwa, w.AzymutDomyslny)
+            : null;
 
         return new WidokBudynku(budynek.Kod, budynek.Nazwa, budynek.Adres,
             budynek.OpisDostepnosciArchitektonicznej, pietra, start);

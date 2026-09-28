@@ -84,10 +84,10 @@ public class DbSeederTesty(BazaTestowaFixture baza)
                 .Select(k => new { k.PunktZrodlowyId, PunktDocelowyId = k.PunktDocelowyId!.Value })
                 .ToListAsync())
             .ToLookup(k => k.PunktZrodlowyId, k => k.PunktDocelowyId);
-        var start = await db.PunktyRuchu
-            .Where(p => p.Kod == DbSeeder.KodWejsciaGlownego)
-            .Select(p => p.Id)
-            .SingleAsync();
+        // Start z wejścia głównego zapisanego przy budynku (D-08), nie ze stałej w kodzie.
+        var budynek = await db.Budynki.Include(b => b.PunktWejsciaGlownego).SingleAsync();
+        Assert.Equal("A-0-P01", budynek.PunktWejsciaGlownego?.Kod);
+        var start = budynek.PunktWejsciaGlownegoId!.Value;
 
         // BFS po aktywnych krawędziach między punktami ruchu.
         var odwiedzone = new HashSet<int> { start };

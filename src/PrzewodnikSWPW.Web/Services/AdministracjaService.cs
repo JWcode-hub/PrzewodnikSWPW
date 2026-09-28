@@ -37,8 +37,18 @@ public sealed class AdministracjaService(IAdministracjaRepozytorium repo)
         {
             return WynikOperacji.Blad(nameof(Budynek.Kod), $"Kod „{b.Kod}” ma już inny budynek. Wybierz inny kod.");
         }
+        // D-08: wejście główne musi leżeć w tym budynku. Nowy budynek nie ma jeszcze punktów — wejście ustawia się później.
+        if (b.PunktWejsciaGlownegoId is int wejscie
+            && !await repo.Zapytanie<PunktRuchu>().AnyAsync(p => p.Id == wejscie && p.Pietro.BudynekId == b.Id, ct))
+        {
+            return WynikOperacji.Blad(nameof(Budynek.PunktWejsciaGlownegoId), "Wejście główne musi być punktem ruchu tego budynku.");
+        }
         return await Zapisz(b, ct);
     }
+
+    /// <summary>Punkty ruchu budynku — do listy wyboru wejścia głównego (D-08).</summary>
+    public Task<List<PunktRuchu>> PunktyBudynku(int budynekId, CancellationToken ct = default) =>
+        repo.Zapytanie<PunktRuchu>().AsNoTracking().Where(p => p.Pietro.BudynekId == budynekId).OrderBy(p => p.Kod).ToListAsync(ct);
 
     public Task<WynikOperacji> UstawAktywnoscBudynku(int id, bool aktywny, CancellationToken ct = default) =>
         UstawAktywnosc<Budynek>(id, b => b.CzyAktywny = aktywny, ct);

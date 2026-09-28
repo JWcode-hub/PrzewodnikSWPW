@@ -165,6 +165,18 @@ public class PanelHttpTesty(AplikacjaFixture app)
     }
 
     [Fact]
+    public async Task EdycjaBudynku_PoleWejsciaGlownego_ZPunktamiTegoBudynku()
+    {
+        var klient = app.Klient();
+        await app.Zaloguj(klient, AplikacjaFixture.EmailAdministratora, app.Haslo);
+
+        var html = await klient.GetStringAsync("/admin/budynki/1/edytuj");
+
+        Assert.Matches("<label[^>]*\\bfor=\"PunktWejsciaGlownegoId\"[^>]*>Punkt wejścia głównego</label>", html);
+        Assert.Matches("<option selected=\"selected\" value=\"\\d+\">A-0-P01 — Wejście główne</option>", html);
+    }
+
+    [Fact]
     public async Task PotwierdzenieUsuniecia_ToOsobnaStronaBezJavaScriptu()
     {
         var klient = app.Klient();

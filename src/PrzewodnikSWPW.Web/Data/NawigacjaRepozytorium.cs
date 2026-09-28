@@ -45,6 +45,7 @@ public sealed class NawigacjaRepozytorium(PrzewodnikDbContext db) : INawigacjaRe
             .AsSplitQuery()
             .Include(b => b.Pietra.OrderBy(p => p.Numer))
                 .ThenInclude(p => p.PunktyRuchu.Where(pr => pr.CzyAktywny).OrderBy(pr => pr.Kod))
+            .Include(b => b.PunktWejsciaGlownego!).ThenInclude(p => p.Pietro)
             .SingleOrDefaultAsync(b => b.Kod == kodBudynku && b.CzyAktywny, ct);
 
     public async Task<int?> ZnajdzPunktIdAsync(string kodBudynku, int numerPietra, string segmentPunktu, CancellationToken ct = default)

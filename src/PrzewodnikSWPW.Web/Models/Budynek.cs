@@ -33,5 +33,13 @@ public class Budynek
     [Display(Name = "Aktywny")]
     public bool CzyAktywny { get; set; } = true;
 
+    /// <summary>
+    /// Wejście główne — punkt startowy spaceru i przeszukiwania wszerz w walidatorze grafu (D-08).
+    /// Klucz obcy po stronie budynku, bo budynek ma dokładnie JEDNO wejście główne.
+    /// </summary>
+    [Display(Name = "Punkt wejścia głównego")]
+    public int? PunktWejsciaGlownegoId { get; set; }
+    public PunktRuchu? PunktWejsciaGlownego { get; set; }
+
     public ICollection<Pietro> Pietra { get; set; } = [];
 }

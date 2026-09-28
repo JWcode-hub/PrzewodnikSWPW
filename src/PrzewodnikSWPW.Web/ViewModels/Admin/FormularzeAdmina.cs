@@ -39,16 +39,25 @@ public sealed class BudynekFormularz
     [Display(Name = "Budynek aktywny (widoczny w przewodniku)")]
     public bool CzyAktywny { get; set; } = true;
 
+    /// <summary>D-08: start spaceru i przeszukiwania wszerz w walidatorze grafu.</summary>
+    [Display(Name = "Punkt wejścia głównego")]
+    public int? PunktWejsciaGlownegoId { get; set; }
+
+    /// <summary>Wyłącznie punkty ruchu tego budynku — wypełnia kontroler.</summary>
+    public IEnumerable<SelectListItem> PunktyBudynku { get; set; } = [];
+
     public static BudynekFormularz Z(Budynek b) => new()
     {
         Id = b.Id, Kod = b.Kod, Nazwa = b.Nazwa, Adres = b.Adres, Opis = b.Opis,
         OpisDostepnosciArchitektonicznej = b.OpisDostepnosciArchitektonicznej, CzyMaWinde = b.CzyMaWinde, CzyAktywny = b.CzyAktywny,
+        PunktWejsciaGlownegoId = b.PunktWejsciaGlownegoId,
     };
 
     public Budynek NaEncje(Budynek b)
     {
         b.Kod = Kod.Trim(); b.Nazwa = Nazwa.Trim(); b.Adres = Adres; b.Opis = Opis;
         b.OpisDostepnosciArchitektonicznej = OpisDostepnosciArchitektonicznej; b.CzyMaWinde = CzyMaWinde; b.CzyAktywny = CzyAktywny;
+        b.PunktWejsciaGlownegoId = PunktWejsciaGlownegoId;
         return b;
     }
 }

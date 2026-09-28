@@ -10,9 +10,6 @@ namespace PrzewodnikSWPW.Web.Data;
 /// </summary>
 public static class DbSeeder
 {
-    /// <summary>Kod punktu startowego — wejście główne budynku A.</summary>
-    public const string KodWejsciaGlownego = "A-0-P01";
-
     private sealed record DaneKrawedzi(
         string Zrodlo, string? DoPunktu, string? DoSali, int Azymut, decimal Waga,
         RodzajPrzejscia Rodzaj, string Opis, bool CzyAktywny = true, bool BezSchodow = true);
@@ -207,6 +204,10 @@ public static class DbSeeder
         db.Sale.AddRange(sale);
         db.Kierunki.AddRange(kierunki);
         await db.SaveChangesAsync(ct);
+
+        // Wejście główne (D-08) — dopiero po zapisie punktów: budynek i punkt wskazują na siebie nawzajem
+        // (budynek → piętro → punkt, punkt ← budynek), więc EF nie wstawi ich w jednym kroku.
+        budynekA.PunktWejsciaGlownego = punkt["P01"];
 
         // Kierunek powrotny: dla A->B wskazujemy krawędź B->A (tylko krawędzie między punktami ruchu).
         foreach (var k in kierunki.Where(k => k.PunktDocelowy is not null))

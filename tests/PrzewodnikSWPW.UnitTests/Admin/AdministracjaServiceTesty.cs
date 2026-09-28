@@ -116,6 +116,38 @@ public class AdministracjaServiceTesty(AplikacjaFixture app)
     }
 
     [Fact]
+    public async Task IndeksUQ_Kierunek_Powrotny_OdrzucaDwaKierunkiZTymSamymPowrotem()
+    {
+        await using var db = app.Baza.UtworzKontekst();
+        var (a, b) = await DwaPunkty(db);
+        await Serwis(db).DodajKierunek(new Kierunek { PunktZrodlowyId = a.Id, PunktDocelowyId = b.Id, Azymut = 90, Waga = 3 }, true, null);
+        var powrot = await db.Kierunki.SingleAsync(k => k.PunktZrodlowyId == b.Id);
+
+        // D-07: druga krawędź nie może wskazywać tego samego powrotu — pilnuje tego baza, nie tylko formularz.
+        db.Kierunki.Add(new Kierunek { PunktZrodlowyId = a.Id, PunktDocelowyId = b.Id, Azymut = 0, Waga = 3, KierunekPowrotnyId = powrot.Id });
+        var wyjatek = await Assert.ThrowsAsync<DbUpdateException>(() => db.SaveChangesAsync());
+
+        Assert.Contains("UQ_Kierunek_Powrotny", wyjatek.InnerException?.Message);
+    }
+
+    [Fact]
+    public async Task WejscieGlowne_MusiLezecWTymBudynku()
+    {
+        await using var db = app.Baza.UtworzKontekst();
+        var budynek = await db.Budynki.FirstAsync();
+        var obcy = new Budynek { Kod = $"W{Random.Shared.Next(100, 999)}", Nazwa = "Obcy" };
+        db.Budynki.Add(obcy);
+        await db.SaveChangesAsync();
+        var punktA = await db.PunktyRuchu.FirstAsync(p => p.Pietro.BudynekId == budynek.Id);
+
+        obcy.PunktWejsciaGlownegoId = punktA.Id;
+        var wynik = await Serwis(db).ZapiszBudynek(obcy);
+
+        Assert.False(wynik.Sukces);
+        Assert.Equal(nameof(Budynek.PunktWejsciaGlownegoId), Assert.Single(wynik.Bledy).Pole);
+    }
+
+    [Fact]
     public async Task DezaktywacjaPunktuIKierunku_NieUsuwaFizycznie()
     {
         await using var db = app.Baza.UtworzKontekst();

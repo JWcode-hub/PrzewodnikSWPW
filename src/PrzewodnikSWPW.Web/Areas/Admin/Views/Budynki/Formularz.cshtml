@@ -15,6 +15,15 @@
     <pole for="Opis" typ="textarea" />
     <pole for="OpisDostepnosciArchitektonicznej" typ="textarea" wiersze="6"
           wskazowka="Wejście, korytarze, schody, windy, pochylnie, toalety, parking, pies asystujący — trafia do Deklaracji Dostępności." />
+    @if (nowy)
+    {
+        <p class="wskazowka">Wejście główne ustawisz po dodaniu punktów ruchu tego budynku — w edycji budynku.</p>
+    }
+    else
+    {
+        <pole for="PunktWejsciaGlownegoId" typ="select" elementy="Model.PunktyBudynku" pusta-opcja="— nie ustawiono —"
+              wskazowka="Punkt, od którego zaczyna się spacer i od którego walidator grafu sprawdza, czy każde miejsce jest osiągalne." />
+    }
     <pole for="CzyMaWinde" typ="checkbox" />
     <pole for="CzyAktywny" typ="checkbox" />
     <div class="przyciski-formularza">

@@ -20,7 +20,7 @@ public class BudynkiController(AdministracjaService admin) : AdminKontroler
 
     [Authorize(Roles = Role.Administrator)]
     [HttpGet("nowy")]
-    public IActionResult Nowy() => View("Formularz", new BudynekFormularz());
+    public IActionResult Nowy() => View("Formularz", new BudynekFormularz());  // nowy budynek nie ma jeszcze punktów
 
     [Authorize(Roles = Role.Administrator)]
     [HttpPost("nowy")]
@@ -43,7 +43,7 @@ public class BudynkiController(AdministracjaService admin) : AdminKontroler
     [Authorize(Roles = Role.Administrator)]
     [HttpGet("{id:int}/edytuj")]
     public async Task<IActionResult> Edytuj(int id, CancellationToken ct) =>
-        await admin.PobierzBudynek(id, ct) is { } b ? View("Formularz", BudynekFormularz.Z(b)) : NotFound();
+        await admin.PobierzBudynek(id, ct) is { } b ? View("Formularz", await Uzupelnij(BudynekFormularz.Z(b), ct)) : NotFound();
 
     [Authorize(Roles = Role.Administrator)]
     [HttpPost("{id:int}/edytuj")]
@@ -62,7 +62,15 @@ public class BudynkiController(AdministracjaService admin) : AdminKontroler
             }
             DodajBledy(wynik);
         }
-        return View("Formularz", model);
+        return View("Formularz", await Uzupelnij(model, ct));
+    }
+
+    private async Task<BudynekFormularz> Uzupelnij(BudynekFormularz model, CancellationToken ct)
+    {
+        model.PunktyBudynku = model.Id is int id
+            ? Lista(await admin.PunktyBudynku(id, ct), p => p.Id, p => $"{p.Kod} — {p.Nazwa}{(p.CzyAktywny ? "" : " (nieaktywny)")}")
+            : [];
+        return model;
     }
 
     [Authorize(Roles = Role.Administrator)]

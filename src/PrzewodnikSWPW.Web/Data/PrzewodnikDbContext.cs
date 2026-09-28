@@ -92,6 +92,11 @@ public class PrzewodnikDbContext(DbContextOptions<PrzewodnikDbContext> options) 
         modelBuilder.Entity<Budynek>(e =>
         {
             e.HasIndex(b => b.Kod).IsUnique().HasDatabaseName("UQ_Budynek_Kod");
+
+            // Wejście główne (D-08) — NO ACTION jak Sala.PunktWejsciowyId (D-04).
+            e.HasOne(b => b.PunktWejsciaGlownego).WithMany()
+             .HasForeignKey(b => b.PunktWejsciaGlownegoId)
+             .OnDelete(DeleteBehavior.Restrict);
             e.Property(b => b.CzyMaWinde).HasDefaultValue(false);
             // Sentinel = true: wartość false zawsze trafia do INSERT, a pominięta kolumna dostaje DEFAULT 1.
             e.Property(b => b.CzyAktywny).HasDefaultValue(true).HasSentinel(true);
@@ -174,6 +179,12 @@ public class PrzewodnikDbContext(DbContextOptions<PrzewodnikDbContext> options) 
             // Z jednego punktu tylko jeden kierunek o danym azymucie — maks. 4 wyjścia (WF-03).
             e.HasIndex(k => new { k.PunktZrodlowyId, k.Azymut }).IsUnique()
              .HasDatabaseName("UQ_Kierunek_Zrodlo_Azymut");
+
+            // Powrót jest symetryczny 1:1, a WithMany() tego nie pilnuje — dwie krawędzie nie mogą
+            // dzielić jednego kierunku powrotnego (D-07). Wzajemność sprawdza walidator grafu.
+            e.HasIndex(k => k.KierunekPowrotnyId).IsUnique()
+             .HasFilter("[KierunekPowrotnyId] IS NOT NULL")
+             .HasDatabaseName("UQ_Kierunek_Powrotny");
 
             e.Property(k => k.CzyAktywny).HasDefaultValue(true).HasSentinel(true);
             e.Property(k => k.CzyDostepnyBezSchodow).HasDefaultValue(true).HasSentinel(true);
