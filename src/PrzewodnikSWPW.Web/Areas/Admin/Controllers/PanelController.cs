@@ -5,7 +5,7 @@ using PrzewodnikSWPW.Web.Services;
 namespace PrzewodnikSWPW.Web.Areas.Admin.Controllers;
 
 [Route("admin")]
-public class PanelController(AdministracjaService admin) : AdminKontroler
+public class PanelController(AdministracjaService admin, WalidatorGrafuService walidator) : AdminKontroler
 {
     [Authorize(Roles = Role.Administrator)]
     [HttpGet("")]
@@ -15,4 +15,9 @@ public class PanelController(AdministracjaService admin) : AdminKontroler
     [Authorize(Roles = Role.Administrator)]
     [HttpGet("rejestr-zmian")]
     public async Task<IActionResult> RejestrZmian(CancellationToken ct) => View(await admin.OstatnieWpisyAudytu(100, ct));
+
+    /// <summary>Walidator grafu (UC-19, WF-25) — raport z linkami do edycji. Uruchamiać przed każdym wdrożeniem (P-07).</summary>
+    [Authorize(Roles = Role.Administrator)]
+    [HttpGet("walidacja-grafu")]
+    public async Task<IActionResult> WalidacjaGrafu(CancellationToken ct) => View(await walidator.WalidujAsync(ct));
 }

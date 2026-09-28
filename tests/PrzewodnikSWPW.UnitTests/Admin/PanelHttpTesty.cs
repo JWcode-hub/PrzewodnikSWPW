@@ -177,6 +177,21 @@ public class PanelHttpTesty(AplikacjaFixture app)
     }
 
     [Fact]
+    public async Task WalidacjaGrafu_RaportZPodsumowaniemIDostepemTylkoDlaAdministratora()
+    {
+        Assert.Equal(HttpStatusCode.Redirect, (await app.Klient().GetAsync("/admin/walidacja-grafu")).StatusCode);
+
+        var klient = app.Klient();
+        await app.Zaloguj(klient, AplikacjaFixture.EmailAdministratora, app.Haslo);
+        var html = await klient.GetStringAsync("/admin/walidacja-grafu");
+
+        Assert.Contains("<h1>Walidacja grafu</h1>", html);
+        Assert.Matches("Błędy: \\d+\\. Ostrzeżenia: \\d+\\.", html);
+        Assert.Matches("<a[^>]*aria-current=\"page\"[^>]*>Walidacja grafu</a>", html);
+        Assert.Single(System.Text.RegularExpressions.Regex.Matches(html, "aria-current=\"page\"")); // „Panel” nie jest drugą bieżącą stroną
+    }
+
+    [Fact]
     public async Task PotwierdzenieUsuniecia_ToOsobnaStronaBezJavaScriptu()
     {
         var klient = app.Klient();

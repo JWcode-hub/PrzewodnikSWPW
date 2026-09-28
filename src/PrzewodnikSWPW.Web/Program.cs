@@ -89,6 +89,7 @@ builder.Services.AddScoped<WyszukiwarkaSalService>();
 builder.Services.AddScoped<UstawieniaDostepnosciService>();
 builder.Services.AddScoped<IAdministracjaRepozytorium, AdministracjaRepozytorium>();
 builder.Services.AddScoped<AdministracjaService>();
+builder.Services.AddScoped<WalidatorGrafuService>();
 
 var app = builder.Build();
 
