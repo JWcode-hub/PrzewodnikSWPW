@@ -1,0 +1,67 @@
+@model KierunekFormularz
+@{
+    var nowy = Model.Id is null;
+    var tytul = nowy ? "Nowy kierunek" : $"Edycja kierunku {Model.Azymut}°";
+    ViewData["Title"] = ViewData.ModelState.IsValid ? tytul : $"Błąd w formularzu – {tytul}";
+    var bladCelu = ViewData.ModelState.TryGetValue(nameof(Model.RodzajCelu), out var stan) && stan.Errors.Count > 0
+        ? stan.Errors[0].ErrorMessage : null;
+}
+
+<h1>@tytul</h1>
+<partial name="_PodsumowanieBledow" />
+
+<form method="post" novalidate class="formularz-admina">
+    @if (nowy)
+    {
+        <pole for="PunktZrodlowyId" typ="select" elementy="Model.Punkty" pusta-opcja="— wybierz punkt —" />
+    }
+    else
+    {
+        <input type="hidden" asp-for="PunktZrodlowyId" />
+    }
+    <pole for="Azymut" typ="select" elementy="KierunekFormularz.Azymuty" pusta-opcja="— wybierz azymut —"
+          wskazowka="Kierunek względem planu budynku, nie względem osoby." />
+
+    @* Dokładnie jeden cel: punkt ruchu ALBO sala (CK_Kierunek_JedenCel). Grupa przycisków opcji — fieldset i legend. *@
+    <fieldset class="mb-3" id="RodzajCelu" aria-describedby="@(bladCelu is null ? null : "RodzajCelu-blad")">
+        <legend class="form-label">Kierunek prowadzi do (wymagane)</legend>
+        @if (bladCelu is not null)
+        {
+            <p id="RodzajCelu-blad" class="komunikat-bledu">Błąd: @bladCelu</p>
+        }
+        <div class="form-check pole--wybor">
+            <input class="form-check-input" type="radio" asp-for="RodzajCelu" value="@KierunekFormularz.CelPunkt" id="cel-punkt" />
+            <label class="form-check-label" for="cel-punkt">innego punktu ruchu</label>
+        </div>
+        <div class="form-check pole--wybor">
+            <input class="form-check-input" type="radio" asp-for="RodzajCelu" value="@KierunekFormularz.CelSala" id="cel-sala" />
+            <label class="form-check-label" for="cel-sala">sali (drzwi)</label>
+        </div>
+    </fieldset>
+    <pole for="PunktDocelowyId" typ="select" elementy="Model.Punkty" pusta-opcja="— wybierz punkt docelowy —"
+          wskazowka="Wypełnij, jeśli kierunek prowadzi do punktu ruchu." />
+    <pole for="SalaDocelowaId" typ="select" elementy="Model.Sale" pusta-opcja="— wybierz salę docelową —"
+          wskazowka="Wypełnij, jeśli kierunek prowadzi do sali." />
+
+    <pole for="Waga" typ="liczba-dziesietna" wskazowka="Odległość w metrach, np. 5 albo 5,5. Na jej podstawie wyznaczana jest najkrótsza trasa." />
+    <pole for="RodzajPrzejscia" typ="select" elementy="KierunekFormularz.RodzajePrzejsc" />
+    <pole for="OpisPrzejscia" typ="textarea"
+          wskazowka="Co mija się po drodze — punkty orientacyjne. Unikaj „w lewo”, „w prawo” i „skręć”: to, w którą stronę się idzie, zależy od tego, skąd ktoś przyszedł, i przewodnik podaje to sam w instrukcji (sprawa O-05)." />
+    <pole for="CzyAktywny" typ="checkbox" />
+    <pole for="CzyDostepnyBezSchodow" typ="checkbox" />
+
+    @if (nowy)
+    {
+        <fieldset class="mb-3">
+            <legend class="h5">Kierunek powrotny</legend>
+            <pole for="UtworzPowrotny" typ="checkbox" />
+            <pole for="OpisPrzejsciaPowrotnego" typ="textarea"
+                  wskazowka="Tylko dla kierunku do punktu ruchu. Z sali kierunku powrotnego nie tworzymy." />
+        </fieldset>
+    }
+
+    <div class="przyciski-formularza">
+        <button type="submit" class="btn btn-primary">@(nowy ? "Dodaj kierunek" : "Zapisz zmiany")</button>
+        <a asp-action="Index" asp-route-punkt="@Model.PunktZrodlowyId">Anuluj i wróć do kierunków punktu</a>
+    </div>
+</form>

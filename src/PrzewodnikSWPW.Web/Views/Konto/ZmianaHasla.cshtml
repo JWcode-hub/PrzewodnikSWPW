@@ -1,0 +1,23 @@
+@model ZmianaHaslaViewModel
+@{
+    var komunikat = ViewData["Komunikat"] as string;
+    ViewData["Title"] = !ViewData.ModelState.IsValid ? "Błąd w formularzu – Zmiana hasła"
+        : komunikat is not null ? "Zapisano – Zmiana hasła" : "Zmiana hasła";
+}
+
+<h1>Zmiana hasła</h1>
+
+@if (komunikat is not null)
+{
+    <p class="komunikat komunikat--sukces" data-oglos="@komunikat">@komunikat</p>
+}
+
+<partial name="_PodsumowanieBledow" />
+
+<form method="post" asp-action="ZmianaHasla" novalidate class="formularz-admina">
+    <pole for="ObecneHaslo" typ="password" autocomplete="current-password" />
+    <pole for="NoweHaslo" typ="password" autocomplete="new-password"
+          wskazowka="Co najmniej 12 znaków, w tym wielka i mała litera, cyfra oraz znak specjalny." />
+    <pole for="PowtorzHaslo" typ="password" autocomplete="new-password" />
+    <button type="submit" class="btn btn-primary">Zmień hasło</button>
+</form>

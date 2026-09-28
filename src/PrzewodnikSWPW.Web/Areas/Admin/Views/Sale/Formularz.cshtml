@@ -1,0 +1,29 @@
+@model SalaFormularz
+@{
+    var nowa = Model.Id is null;
+    var tytul = nowa ? "Nowa sala" : $"Edycja sali {Model.Symbol}";
+    ViewData["Title"] = ViewData.ModelState.IsValid ? tytul : $"Błąd w formularzu – {tytul}";
+}
+
+<h1>@tytul</h1>
+<partial name="_PodsumowanieBledow" />
+
+<form method="post" novalidate class="formularz-admina">
+    <pole for="PietroId" typ="select" elementy="Model.Pietra" pusta-opcja="— wybierz piętro —" />
+    <pole for="TypSaliId" typ="select" elementy="Model.TypySal" pusta-opcja="— wybierz typ sali —" />
+    <pole for="Symbol" wskazowka="Dokładnie tak, jak na tabliczce przy drzwiach, np. A15." />
+    <pole for="Nazwa" />
+    <pole for="Aliasy" wskazowka="Nazwy potoczne, po których ludzie szukają sali, np. dziekanat;sekretariat WI." />
+    <pole for="PunktWejsciowyId" typ="select" elementy="Model.Punkty" pusta-opcja="— brak (trasa do sali nie zadziała) —"
+          wskazowka="Punkt ruchu na korytarzu tuż przed drzwiami sali. Od niego i do niego wyznaczana jest trasa." />
+    <pole for="Opis" typ="textarea" />
+    <pole for="OpisGlosowy" typ="textarea"
+          wskazowka="Krótkie zdania, bez skrótów, liczby słownie — np. „Sala A piętnaście, pracownia sieci”." />
+    <pole for="LiczbaMiejsc" typ="liczba" />
+    <pole for="CzyDostepnaDlaWozkow" typ="checkbox" />
+    <pole for="CzyAktywna" typ="checkbox" />
+    <div class="przyciski-formularza">
+        <button type="submit" class="btn btn-primary">@(nowa ? "Dodaj salę" : "Zapisz zmiany")</button>
+        <a asp-action="Index">Anuluj i wróć do listy sal</a>
+    </div>
+</form>

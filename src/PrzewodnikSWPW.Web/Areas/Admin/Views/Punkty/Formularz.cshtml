@@ -1,0 +1,28 @@
+@model PunktFormularz
+@{
+    var nowy = Model.Id is null;
+    var tytul = nowy ? "Nowy punkt ruchu" : $"Edycja punktu {Model.Kod}";
+    ViewData["Title"] = ViewData.ModelState.IsValid ? tytul : $"Błąd w formularzu – {tytul}";
+}
+
+<h1>@tytul</h1>
+<partial name="_PodsumowanieBledow" />
+
+<form method="post" novalidate class="formularz-admina">
+    <pole for="PietroId" typ="select" elementy="Model.Pietra" pusta-opcja="— wybierz piętro —" />
+    <pole for="TypPunktuId" typ="select" elementy="Model.TypyPunktow" pusta-opcja="— wybierz typ punktu —" />
+    <pole for="Kod" wskazowka="Budynek, piętro i numer punktu, np. A-0-P10. Kod pojawia się w adresie strony." />
+    <pole for="Nazwa" wskazowka="Krótko, np. „Korytarz zachodni przy sali A12”." />
+    <pole for="Opis" typ="textarea" />
+    <pole for="OpisGlosowy" typ="textarea"
+          wskazowka="Co jest w tym miejscu i jakie są punkty orientacyjne. Krótkie zdania, bez skrótów, liczby słownie." />
+    <pole for="AzymutDomyslny" typ="select" elementy="KierunekFormularz.Azymuty"
+          wskazowka="W którą stronę jest zwrócony użytkownik, który otworzy ten punkt z linku." />
+    <pole for="X" typ="liczba-dziesietna" wskazowka="Tylko do rysowania planu, nie do wyznaczania trasy." />
+    <pole for="Y" typ="liczba-dziesietna" />
+    <pole for="CzyAktywny" typ="checkbox" />
+    <div class="przyciski-formularza">
+        <button type="submit" class="btn btn-primary">@(nowy ? "Dodaj punkt i przejdź do kierunków" : "Zapisz zmiany")</button>
+        <a asp-action="Index">Anuluj i wróć do listy punktów</a>
+    </div>
+</form>

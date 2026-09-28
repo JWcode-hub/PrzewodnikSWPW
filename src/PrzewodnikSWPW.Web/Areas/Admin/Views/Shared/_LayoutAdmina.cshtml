@@ -1,0 +1,33 @@
+@{
+    Layout = "/Views/Shared/_Layout.cshtml";
+    var biezacy = ViewContext.RouteData.Values["controller"] as string;
+    var sekcje = new (string Kontroler, string Tekst)[]
+    {
+        ("Panel", "Panel — strona startowa"),
+        ("Budynki", "Budynki"),
+        ("Pietra", "Piętra"),
+        ("Sale", "Sale"),
+        ("Punkty", "Punkty ruchu i kierunki"),
+        ("TypySal", "Typy sal"),
+        ("TypyPunktow", "Typy punktów"),
+        ("Udogodnienia", "Udogodnienia"),
+    };
+}
+
+<nav aria-label="Menu panelu administratora" class="menu-admina">
+    <ul>
+        @foreach (var (kontroler, tekst) in sekcje)
+        {
+            <li><a asp-area="Admin" asp-controller="@kontroler" asp-action="Index"
+                   aria-current="@(biezacy == kontroler ? "page" : null)">@tekst</a></li>
+        }
+        <li><a asp-area="Admin" asp-controller="Panel" asp-action="RejestrZmian"
+               aria-current="@(ViewContext.RouteData.Values["action"] as string == "RejestrZmian" ? "page" : null)">Rejestr zmian</a></li>
+    </ul>
+</nav>
+
+@RenderBody()
+
+@section Scripts {
+    @await RenderSectionAsync("Scripts", required: false)
+}

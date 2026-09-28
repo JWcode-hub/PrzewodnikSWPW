@@ -1,0 +1,55 @@
+@model List<PunktWiersz>
+@{
+    ViewData["Title"] = "Punkty ruchu";
+}
+
+<h1>Punkty ruchu</h1>
+<partial name="_Komunikat" />
+<p>Punkt ruchu to miejsce, w którym użytkownik wybiera kierunek. Każdy punkt ma do czterech kierunków — po jednym na azymut.</p>
+<p><a asp-action="Nowy" class="btn btn-primary">Dodaj punkt ruchu</a></p>
+
+<table class="table tabela-admina">
+    <caption>Punkty ruchu (@Model.Count)</caption>
+    <thead>
+        <tr>
+            <th scope="col">Kod</th>
+            <th scope="col">Nazwa</th>
+            <th scope="col">Piętro</th>
+            <th scope="col">Typ</th>
+            <th scope="col">Aktywnych kierunków</th>
+            <th scope="col">Stan</th>
+            <th scope="col">Działania</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var p in Model)
+        {
+            <tr>
+                <th scope="row">@p.Kod</th>
+                <td>@p.Nazwa</td>
+                <td>@p.Pietro</td>
+                <td>@p.Typ</td>
+                <td>@(p.LiczbaAktywnychKierunkow == 0 ? "0 — ślepy zaułek" : p.LiczbaAktywnychKierunkow.ToString())</td>
+                <td>@(p.CzyAktywny ? "aktywny" : "nieaktywny")</td>
+                <td>
+                    <ul class="dzialania">
+                        <li><a asp-controller="Kierunki" asp-action="Index" asp-route-punkt="@p.Id">Kierunki<span class="visually-hidden"> punktu @p.Kod</span></a></li>
+                        <li><a asp-action="Edytuj" asp-route-id="@p.Id">Edytuj<span class="visually-hidden"> punkt @p.Kod</span></a></li>
+                        @if (p.CzyAktywny)
+                        {
+                            <li><a asp-action="Dezaktywuj" asp-route-id="@p.Id">Dezaktywuj<span class="visually-hidden"> punkt @p.Kod</span></a></li>
+                        }
+                        else
+                        {
+                            <li>
+                                <form method="post" asp-action="Aktywuj" asp-route-id="@p.Id">
+                                    <button type="submit" class="btn btn-secondary btn-sm">Przywróć<span class="visually-hidden"> punkt @p.Kod</span></button>
+                                </form>
+                            </li>
+                        }
+                    </ul>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

@@ -1,0 +1,38 @@
+@model PotwierdzenieViewModel
+@{
+    ViewData["Title"] = Model.Tytul;
+}
+@* Potwierdzenie jako osobna strona, nie okno confirm() — działa bez JavaScriptu, z czytnikiem ekranu
+   i klawiaturą; przycisk mówi dokładnie, co się stanie. *@
+
+<h1>@Model.Tytul</h1>
+
+@if (Model.Przeszkoda is not null)
+{
+    <p class="komunikat komunikat--blad">@Model.Przeszkoda</p>
+    <p><a href="@Model.AdresAnulowania">@Model.TekstAnulowania</a></p>
+}
+else
+{
+    <p><strong>@Model.Pytanie</strong></p>
+    @if (Model.Wyjasnienie is not null)
+    {
+        <p>@Model.Wyjasnienie</p>
+    }
+
+    <form method="post" action="@Model.AkcjaFormularza">
+        @Html.AntiForgeryToken()
+        @if (Model.PokazOpcjePowrotnego)
+        {
+            <div class="form-check pole--wybor mb-3">
+                <input class="form-check-input" type="checkbox" id="takzePowrotny" name="takzePowrotny" value="true" checked />
+                <input type="hidden" name="takzePowrotny" value="false" />
+                <label class="form-check-label" for="takzePowrotny">Dezaktywuj też kierunek powrotny</label>
+            </div>
+        }
+        <div class="przyciski-formularza">
+            <button type="submit" class="btn btn-primary">@Model.TekstPrzycisku</button>
+            <a href="@Model.AdresAnulowania">@Model.TekstAnulowania</a>
+        </div>
+    </form>
+}

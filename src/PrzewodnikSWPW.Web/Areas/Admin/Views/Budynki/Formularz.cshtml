@@ -1,0 +1,24 @@
+@model BudynekFormularz
+@{
+    var nowy = Model.Id is null;
+    var tytul = nowy ? "Nowy budynek" : $"Edycja budynku {Model.Kod}";
+    ViewData["Title"] = ViewData.ModelState.IsValid ? tytul : $"Błąd w formularzu – {tytul}";
+}
+
+<h1>@tytul</h1>
+<partial name="_PodsumowanieBledow" />
+
+<form method="post" novalidate class="formularz-admina">
+    <pole for="Kod" wskazowka="Krótkie oznaczenie używane w adresach przewodnika, np. A." />
+    <pole for="Nazwa" />
+    <pole for="Adres" autocomplete="street-address" />
+    <pole for="Opis" typ="textarea" />
+    <pole for="OpisDostepnosciArchitektonicznej" typ="textarea" wiersze="6"
+          wskazowka="Wejście, korytarze, schody, windy, pochylnie, toalety, parking, pies asystujący — trafia do Deklaracji Dostępności." />
+    <pole for="CzyMaWinde" typ="checkbox" />
+    <pole for="CzyAktywny" typ="checkbox" />
+    <div class="przyciski-formularza">
+        <button type="submit" class="btn btn-primary">@(nowy ? "Dodaj budynek" : "Zapisz zmiany")</button>
+        <a asp-action="Index">Anuluj i wróć do listy budynków</a>
+    </div>
+</form>

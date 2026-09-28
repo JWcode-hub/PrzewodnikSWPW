@@ -1,0 +1,5 @@
+@* Komunikat po udanej operacji (PRG): widoczny i ogłaszany przez obszar aria-live (site.js). *@
+@if (ViewData["Komunikat"] is string komunikat)
+{
+    <p class="komunikat komunikat--sukces" data-oglos="@komunikat">@komunikat</p>
+}
