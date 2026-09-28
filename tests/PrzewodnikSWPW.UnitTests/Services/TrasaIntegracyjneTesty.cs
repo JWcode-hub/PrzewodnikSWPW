@@ -94,7 +94,7 @@ public sealed class TrasaIntegracyjneTesty : IDisposable
     /// Sprawa otwarta O-05 (docs/09_DECYZJE.md): opisy przejść w danych zawierają strony względne
     /// („po prawej”), które są prawdziwe tylko przy jednym kierunku dojścia. Test uaktywnić po poprawieniu danych.
     /// </summary>
-    [Fact(Skip = "O-05: OpisPrzejscia w 02_dane_poczatkowe.sql zawiera strony względne — czeka na decyzję zespołu")]
+    [Fact]
     public async Task Instrukcje_NiePrzeczaStronomWOpisachPrzejsc()
     {
         await using var db = _baza.UtworzKontekst();

@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using PrzewodnikSWPW.Web.Data;
+using PrzewodnikSWPW.Web.Services;
 
 namespace PrzewodnikSWPW.UnitTests.Data;
 
@@ -25,7 +26,9 @@ public class DbSeederTesty(BazaTestowaFixture baza)
         Assert.Equal(1, await db.SalaUdogodnienia.CountAsync());
 
         var nieaktywny = await db.Kierunki.SingleAsync(k => !k.CzyAktywny);
-        Assert.Equal("Po lewej stronie nie ma przejścia. Jest tam ściana z gablotą informacyjną.", nieaktywny.OpisPrzejscia);
+        Assert.Equal("Jest tam ściana z gablotą informacyjną.", nieaktywny.OpisPrzejscia);
+        // D-06: stronę celu tej krawędzi („W lewo — brak przejścia.”) wylicza prezentacja z azymutu — opis jej nie podaje.
+        Assert.DoesNotMatch(WalidatorGrafuService.SlowaStronne(), nieaktywny.OpisPrzejscia!);
     }
 
     [Fact]
@@ -116,5 +119,26 @@ public class DbSeederTesty(BazaTestowaFixture baza)
 
         Assert.False(wstawiono);
         Assert.Equal(9, await db.PunktyRuchu.CountAsync());
+    }
+
+    /// <summary>
+    /// Dane początkowe po D-06, D-07, D-08: walidator grafu nie zgłasza błędów, a jedyne ostrzeżenia to
+    /// zamierzone zdania o przycisku windy — strona względem nazwanego obiektu (drzwi), wyjątek z D-06.
+    /// </summary>
+    [Fact]
+    public async Task DanePoczatkowe_WalidatorBezBledow_OstrzezeniaTylkoPrzyWindzie()
+    {
+        await using var db = baza.UtworzKontekst();
+
+        var uwagi = await new WalidatorGrafuService(new AdministracjaRepozytorium(db)).WalidujAsync();
+
+        Assert.DoesNotContain(uwagi, u => u.Poziom == PoziomUwagi.Blad);
+        Assert.All(uwagi, u =>
+        {
+            Assert.Equal(WalidatorGrafuService.RegulaSlowaStronne, u.Regula);
+            Assert.Equal("punkt A-0-P08", u.OpisRekordu);
+            Assert.Contains("stronie drzwi", u.Tresc);
+        });
+        Assert.Equal(2, uwagi.Count); // Opis i OpisGlosowy punktu przed windą
     }
 }
