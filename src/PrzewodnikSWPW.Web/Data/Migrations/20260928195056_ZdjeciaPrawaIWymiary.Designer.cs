@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PrzewodnikSWPW.Web.Data;
 
@@ -11,9 +12,11 @@ using PrzewodnikSWPW.Web.Data;
 namespace PrzewodnikSWPW.Web.Data.Migrations
 {
     [DbContext(typeof(PrzewodnikDbContext))]
-    partial class PrzewodnikDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260928195056_ZdjeciaPrawaIWymiary")]
+    partial class ZdjeciaPrawaIWymiary
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
