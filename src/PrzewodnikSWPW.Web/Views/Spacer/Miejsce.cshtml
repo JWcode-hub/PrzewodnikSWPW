@@ -1,0 +1,59 @@
+@model MiejsceViewModel
+@{
+    var m = Model.Miejsce;
+    // Bez JavaScriptu komunikat o braku przejścia dociera do czytnika w tytule, odczytywanym po przeładowaniu.
+    ViewData["Title"] = Model.Komunikat is null ? m.Nazwa : $"Brak przejścia – {m.Nazwa}";
+
+    static string Zrodlo(string sciezka) => sciezka.StartsWith('/') ? sciezka : $"/media/{sciezka}";
+}
+
+@* Kolejność elementów jest stała (UI-02, 06 §2.2): nagłówek → opis → zdjęcie → kierunki. *@
+<h1 id="naglowek-miejsca" tabindex="-1">@m.Nazwa</h1>
+
+<p id="opis-miejsca">@(m.Opis ?? m.OpisGlosowy)</p>
+
+@foreach (var (zdjecie, i) in m.Zdjecia.Select((z, i) => (z, i)))
+{
+    <figure>
+        <img src="@Zrodlo(zdjecie.SciezkaPliku)"
+             alt="@(zdjecie.CzyDekoracyjne ? "" : zdjecie.TekstAlternatywny)"
+             class="img-fluid"
+             loading="@(i == 0 ? "eager" : "lazy")" />
+        @if (!zdjecie.CzyDekoracyjne)
+        {
+            <figcaption>@(zdjecie.OpisRozszerzony ?? $"Zdjęcie miejsca: {m.Nazwa}.")</figcaption>
+        }
+    </figure>
+}
+
+<h2>Dokąd chcesz pójść?</h2>
+<ul class="lista-kierunkow">
+    @foreach (var k in Model.Kierunki)
+    {
+        <li data-kierunek="@k.Parametr">
+            @if (k.Href is not null)
+            {
+                <a href="@k.Href" class="kierunek">@k.Tekst</a>
+            }
+            else
+            {
+                @* Kierunek bez przejścia: NIE link i NIE wyłączony przycisk — zwykły tekst, który czytnik zawsze przeczyta. *@
+                <span class="kierunek kierunek--brak">@k.Tekst</span>
+            }
+        </li>
+    }
+</ul>
+
+@if (Model.Komunikat is not null)
+{
+    <p class="komunikat komunikat--blad" data-oglos="@Model.Komunikat" data-oglos-pilne>@Model.Komunikat</p>
+}
+
+<nav aria-label="Nawigacja pomocnicza spaceru" class="mt-4">
+    <p>@m.NazwaBudynku, @(char.ToLowerInvariant(m.NazwaPietra[0]) + m.NazwaPietra[1..]).</p>
+    <p><a href="@Model.AdresBudynku">Wybierz inne miejsce startowe w budynku @m.Adres.KodBudynku</a></p>
+</nav>
+
+@section Scripts {
+    <script src="~/js/spacer.js" asp-append-version="true"></script>
+}

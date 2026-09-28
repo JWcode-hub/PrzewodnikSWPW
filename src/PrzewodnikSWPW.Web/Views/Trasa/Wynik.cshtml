@@ -1,0 +1,60 @@
+@model WynikTrasyViewModel
+@{
+    var w = Model.Wynik;
+    var zDo = w.SalaZ is not null && w.SalaDo is not null ? $"z sali {w.SalaZ.Symbol} do sali {w.SalaDo.Symbol}" : null;
+
+    var naglowek = w.Rodzaj switch
+    {
+        RodzajWynikuTrasy.Znaleziona => $"Trasa {zDo}",
+        RodzajWynikuTrasy.NaMiejscu => "Jesteś już na miejscu",
+        RodzajWynikuTrasy.TylkoZeSchodami => $"Brak trasy bez schodów {zDo}",
+        RodzajWynikuTrasy.BrakTrasy => zDo is null ? "Nie znaleziono trasy" : $"Nie znaleziono trasy {zDo}",
+        _ => "Nie można wyznaczyć trasy",
+    };
+    ViewData["Title"] = naglowek;
+}
+
+<h1 id="naglowek-trasy" tabindex="-1" data-fokus-po-zaladowaniu>@naglowek</h1>
+
+@if (w.Komunikat is not null)
+{
+    <p class="@(w.Rodzaj is RodzajWynikuTrasy.Znaleziona or RodzajWynikuTrasy.NaMiejscu ? null : "komunikat komunikat--blad")">@w.Komunikat</p>
+}
+
+@if (w.KontaktAlternatywny is not null)
+{
+    <partial name="_KontaktAlternatywny" model="w.KontaktAlternatywny" />
+}
+
+@if (w.Trasa is { } trasa)
+{
+    @if (w.Rodzaj == RodzajWynikuTrasy.TylkoZeSchodami)
+    {
+        <h2>Trasa alternatywna — zawiera schody</h2>
+        <p><strong>Uwaga: ta trasa prowadzi po schodach.</strong> Odcinki ze schodami są oznaczone słowem „Schody”.</p>
+    }
+
+    <p>
+        Długość trasy: @NawigacjaService.Metry(trasa.DlugoscMetry).
+        Liczba kroków: @trasa.LiczbaKrokow.
+        Szacowany czas przejścia: @WynikTrasyViewModel.SzacowanyCzas(trasa.CzasSekundy).
+        @(w.TrybWindy && !trasa.CzyZawieraSchody ? "Trasa bez schodów." : trasa.CzyZawieraSchody ? "Trasa zawiera schody." : "")
+    </p>
+
+    <h2 class="@(w.Rodzaj == RodzajWynikuTrasy.TylkoZeSchodami ? "h4" : null)">Kolejne kroki</h2>
+    <ol class="lista-krokow">
+        @foreach (var krok in trasa.Instrukcje)
+        {
+            <li>@if (krok.CzySchody) {<strong>Schody. </strong>}@krok.Tekst</li>
+        }
+    </ol>
+}
+
+<h2>Co dalej?</h2>
+<ul>
+    @if (Model.AdresSaliDocelowej is not null && w.SalaDo is not null)
+    {
+        <li><a href="@Model.AdresSaliDocelowej">Pokaż salę @w.SalaDo.Symbol</a></li>
+    }
+    <li><a href="@Model.AdresFormularza">Zmień salę początkową lub docelową</a></li>
+</ul>

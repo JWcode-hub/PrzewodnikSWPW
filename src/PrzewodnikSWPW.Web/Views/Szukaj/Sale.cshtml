@@ -1,0 +1,19 @@
+@model SaleBudynkuViewModel
+@{
+    ViewData["Title"] = $"Sale – {Model.Budynek.Nazwa}";
+    static string PierwszaMala(string t) => t.Length == 0 ? t : char.ToLowerInvariant(t[0]) + t[1..];
+}
+
+<h1>Sale: @Model.Budynek.Nazwa</h1>
+<p>@Odmiana.Sale(Model.Sale.Count), uporządkowane według pięter.</p>
+
+@foreach (var pietro in Model.Sale.GroupBy(s => (s.NumerPietra, s.NazwaPietra)))
+{
+    <h2>@pietro.Key.NazwaPietra</h2>
+    <ul>
+        @foreach (var s in pietro)
+        {
+            <li><a asp-controller="Sala" asp-action="Index" asp-route-id="@s.Id">@s.Symbol — @s.Nazwa</a> (@PierwszaMala(s.TypSali))</li>
+        }
+    </ul>
+}
