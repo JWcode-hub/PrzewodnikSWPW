@@ -84,6 +84,7 @@ builder.Services.AddSingleton<GeneratorOpisuService>();
 builder.Services.AddScoped<ITrasaRepozytorium, TrasaRepozytorium>();
 builder.Services.AddScoped<WyszukiwarkaTrasService>();
 builder.Services.Configure<KontaktAlternatywnyOptions>(builder.Configuration.GetSection(KontaktAlternatywnyOptions.Sekcja));
+builder.Services.Configure<DeklaracjaDostepnosciOptions>(builder.Configuration.GetSection(DeklaracjaDostepnosciOptions.Sekcja));
 builder.Services.AddScoped<IWyszukiwarkaRepozytorium, WyszukiwarkaRepozytorium>();
 builder.Services.AddScoped<WyszukiwarkaSalService>();
 builder.Services.AddScoped<UstawieniaDostepnosciService>();

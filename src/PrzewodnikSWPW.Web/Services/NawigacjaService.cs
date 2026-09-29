@@ -83,6 +83,12 @@ public sealed class NawigacjaService(INawigacjaRepozytorium repozytorium, TimePr
             .Select(b => new BudynekNaLiscie(b.Kod, b.Nazwa, b.Adres))
             .ToList();
 
+    /// <summary>Opisy dostępności architektonicznej aktywnych budynków — sekcja a11y-architektura Deklaracji (WF-36).</summary>
+    public async Task<IReadOnlyList<DostepnoscBudynku>> PobierzDostepnoscArchitektoniczna(CancellationToken ct = default) =>
+        (await repozytorium.PobierzBudynkiAsync(ct))
+            .Select(b => new DostepnoscBudynku(b.Nazwa, b.Adres, b.OpisDostepnosciArchitektonicznej))
+            .ToList();
+
     /// <summary>
     /// Budynek z piętrami i punktami do wyboru. Punkt startowy spaceru to wejście główne budynku (D-08);
     /// bez ustawionego wejścia ekran pokazuje tylko listę punktów. <c>null</c>, gdy budynek nie istnieje.

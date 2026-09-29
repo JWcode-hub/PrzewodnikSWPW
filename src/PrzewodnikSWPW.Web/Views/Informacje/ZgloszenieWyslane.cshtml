@@ -1,0 +1,22 @@
+@model DeklaracjaDostepnosciOptions
+@{
+    ViewData["Title"] = "Zgłoszenie przyjęte";
+}
+
+<h1>Zgłoszenie przyjęte</h1>
+
+<p class="komunikat komunikat--sukces" data-oglos="Zgłoszenie przyjęte.">Dziękujemy za zgłoszenie braku dostępności.</p>
+
+<p><strong>Wersja demonstracyjna:</strong> w tym projekcie dydaktycznym zgłoszenie nie zostało zapisane ani wysłane.
+    W serwisie produkcyjnym trafiłoby do osoby odpowiedzialnej za dostępność, która odpowiada nie później niż
+    w ciągu 7 dni.</p>
+
+@if (Model.Email is not null)
+{
+    <p>Jeśli sprawa jest pilna, napisz na adres <a href="mailto:@Model.Email">@Model.Email</a>.</p>
+}
+
+<ul>
+    <li><a href="/deklaracja-dostepnosci">Przeczytaj procedurę rozpatrywania zgłoszeń w Deklaracji Dostępności</a></li>
+    <li><a href="/">Wróć na stronę główną przewodnika</a></li>
+</ul>

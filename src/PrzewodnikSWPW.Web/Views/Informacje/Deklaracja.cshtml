@@ -1,0 +1,102 @@
+@model DeklaracjaViewModel
+@{
+    ViewData["Title"] = "Deklaracja Dostępności";
+    var d = Model.Dane;
+    const string DoUzupelnienia = "do uzupełnienia przed publikacją serwisu";
+    // Daty w formacie RRRR-MM-DD — wymaganym przez wzór deklaracji (Zarządzenie 14/2021 §3).
+    static string Data(DateOnly data) => data.ToString("yyyy-MM-dd");
+    // Opis z panelu administratora: akapity rozdzielone pustą linią.
+    static IEnumerable<string> Akapity(string tekst) =>
+        tekst.Replace("\r\n", "\n").Split("\n\n", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+}
+
+<h1>Deklaracja Dostępności</h1>
+
+<p id="a11y-wstep"><span id="a11y-podmiot">@d.NazwaPodmiotu</span> zobowiązuje się zapewnić dostępność swojej strony
+    internetowej zgodnie z ustawą z dnia 4 kwietnia 2019 r. o dostępności cyfrowej stron internetowych i aplikacji
+    mobilnych podmiotów publicznych. Oświadczenie w sprawie dostępności ma zastosowanie do strony internetowej
+    <a id="a11y-url" href="@Model.AdresSerwisu">Multimedialny przewodnik po Uczelni</a>.</p>
+
+<ul>
+    <li>Data publikacji strony internetowej: <time id="a11y-data-publikacja" datetime="@Data(d.DataPublikacji)">@Data(d.DataPublikacji)</time>.</li>
+    <li>Data ostatniej istotnej aktualizacji: <time id="a11y-data-aktualizacja" datetime="@Data(d.DataAktualizacji)">@Data(d.DataAktualizacji)</time>.</li>
+</ul>
+
+<h2>Stan dostępności cyfrowej</h2>
+<p id="a11y-status">Strona internetowa jest <strong>@d.OpisStatusu</strong> z ustawą z dnia 4 kwietnia 2019 r.
+    o dostępności cyfrowej stron internetowych i aplikacji mobilnych podmiotów publicznych@(d.Status == StatusZgodnosci.Zgodna ? "." : " z powodu niezgodności wymienionych poniżej.")</p>
+@if (d.Niezgodnosci.Length > 0)
+{
+    <ul>
+        @foreach (var n in d.Niezgodnosci)
+        {
+            <li>@n</li>
+        }
+    </ul>
+}
+
+<h2>Przygotowanie deklaracji w sprawie dostępności</h2>
+<ul>
+    <li>Deklarację sporządzono dnia <time id="a11y-data-sporzadzenie" datetime="@Data(d.DataSporzadzenia)">@Data(d.DataSporzadzenia)</time>.</li>
+    <li>Deklarację sporządzono na podstawie: <span id="a11y-ocena">@d.SposobOceny</span>.</li>
+    <li>Podmiot zewnętrzny przeprowadzający ocenę: <span id="a11y-audytor">@(d.Audytor ?? "nie dotyczy — ocenę przeprowadził zespół projektowy")</span>.</li>
+</ul>
+
+<h2>Skróty klawiszowe</h2>
+<p>Serwis w całości obsłużysz klawiszem Tab i Enter — skróty tylko przyspieszają poruszanie się po spacerze.
+    Wszystkie używają klawisza Alt, żeby nie kolidować z czytnikiem ekranu, i można je wyłączyć
+    w <a asp-controller="Ustawienia" asp-action="Index">ustawieniach dostępności</a>.</p>
+<ul>
+    @foreach (var s in SkrotyKlawiszowe.Wszystkie)
+    {
+        <li><kbd>@s.Klawisze</kbd> — @s.Dzialanie</li>
+    }
+</ul>
+<p>Pełny wykaz: <a href="/skroty-klawiszowe">Skróty klawiszowe przewodnika</a>.</p>
+
+<h2 id="a11y-kontakt">Informacje zwrotne i dane kontaktowe</h2>
+<p>W przypadku problemów z dostępnością strony internetowej prosimy o kontakt. Osobą kontaktową jest
+    <span id="a11y-osoba">@(d.OsobaKontaktowa ?? DoUzupelnienia)</span>.
+    Kontaktować można się także, pisząc na adres
+    <span id="a11y-email">@if (d.Email is not null) { <a href="mailto:@d.Email">@d.Email</a> } else { @DoUzupelnienia }</span>
+    lub dzwoniąc na numer <span id="a11y-telefon">@(d.Telefon ?? DoUzupelnienia)</span>.
+    Tą samą drogą można składać wnioski o udostępnienie informacji niedostępnej oraz żądania zapewnienia dostępności.</p>
+<p>Brak dostępności możesz też zgłosić przez <a href="/zglos-problem">formularz zgłoszenia braku dostępności</a>.</p>
+<p>Pomoc na miejscu: @Model.KontaktAlternatywny.Opis</p>
+
+<h3 id="a11y-procedura">Procedura wnioskowo-skargowa</h3>
+<p>Każdy ma prawo wystąpić z żądaniem zapewnienia dostępności cyfrowej strony internetowej albo jej elementu.
+    Można też zażądać udostępnienia informacji w formie alternatywnej, np. odczytania niedostępnego dokumentu
+    lub opisania zawartości zdjęcia. Żądanie powinno zawierać dane kontaktowe osoby zgłaszającej, wskazanie strony
+    albo elementu, którego dotyczy, oraz sposób kontaktu. Jeżeli osoba żądająca zgłasza potrzebę otrzymania
+    informacji w formie alternatywnej, powinna także określić dogodną dla niej formę tej informacji.</p>
+<p>Podmiot publiczny powinien zrealizować żądanie niezwłocznie, nie później niż w ciągu 7 dni od dnia jego
+    wystąpienia. Jeżeli dotrzymanie tego terminu nie jest możliwe, niezwłocznie informuje o tym, kiedy realizacja
+    żądania będzie możliwa — nie później niż w ciągu 2 miesięcy od dnia wystąpienia z żądaniem. Jeżeli zapewnienie
+    dostępności nie jest możliwe, podmiot może zaproponować alternatywny sposób dostępu do informacji.</p>
+<p>Gdy podmiot odmówi realizacji żądania, nie dotrzyma terminu albo zaproponowany alternatywny sposób dostępu
+    nie jest dogodny, można złożyć skargę na zapewnienie dostępności cyfrowej. Po wyczerpaniu tej procedury można
+    złożyć wniosek do Rzecznika Praw Obywatelskich —
+    <a href="https://bip.brpo.gov.pl/">strona Rzecznika Praw Obywatelskich</a>.</p>
+
+<h2 id="a11y-architektura">Dostępność architektoniczna</h2>
+@foreach (var b in Model.Budynki)
+{
+    <h3>@b.Nazwa@(b.Adres is null ? "" : $", {b.Adres}")</h3>
+    @if (string.IsNullOrWhiteSpace(b.OpisDostepnosciArchitektonicznej))
+    {
+        <p>Opis dostępności architektonicznej tego budynku nie został jeszcze uzupełniony.</p>
+    }
+    else
+    {
+        @foreach (var akapit in Akapity(b.OpisDostepnosciArchitektonicznej))
+        {
+            <p>@akapit</p>
+        }
+    }
+}
+<h3>Tłumacz języka migowego</h3>
+<p>@(d.TlumaczMigowy ?? $"Informacja o możliwości skorzystania z tłumacza polskiego języka migowego: {DoUzupelnienia}.")</p>
+
+<h2 id="a11y-aplikacje">Aplikacje mobilne</h2>
+<p>Przewodnik nie ma aplikacji mobilnej — działa w przeglądarce internetowej, także na telefonie.</p>

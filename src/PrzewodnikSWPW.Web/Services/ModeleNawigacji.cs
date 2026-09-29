@@ -49,6 +49,8 @@ public sealed record ZdjecieMiejsca(
         z.ObszaryAktywne.OrderBy(o => o.Id).Select(o => new ObszarNaZdjeciu(o.KierunekId, o.Ksztalt, o.Wspolrzedne, o.Etykieta)).ToList());
 }
 
+public sealed record DostepnoscBudynku(string Nazwa, string? Adres, string? OpisDostepnosciArchitektonicznej);
+
 /// <summary>Aktywny obszar zdjęcia (WF-27) — dodatkowy link do kierunku, który jest też na liście kierunków.</summary>
 public sealed record ObszarNaZdjeciu(int KierunekId, string Ksztalt, string Wspolrzedne, string Etykieta);
 
