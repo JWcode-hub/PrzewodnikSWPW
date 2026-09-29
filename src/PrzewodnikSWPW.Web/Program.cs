@@ -90,6 +90,9 @@ builder.Services.AddScoped<UstawieniaDostepnosciService>();
 builder.Services.AddScoped<IAdministracjaRepozytorium, AdministracjaRepozytorium>();
 builder.Services.AddScoped<AdministracjaService>();
 builder.Services.AddScoped<WalidatorGrafuService>();
+builder.Services.Configure<ZdjeciaOptions>(builder.Configuration.GetSection(ZdjeciaOptions.Sekcja));
+builder.Services.AddSingleton<IMagazynZdjec, MagazynZdjec>();
+builder.Services.AddScoped<ZdjeciaService>();
 
 var app = builder.Build();
 

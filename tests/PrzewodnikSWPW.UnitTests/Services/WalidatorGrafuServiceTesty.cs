@@ -279,8 +279,8 @@ public class WalidatorGrafuServiceTesty
 
         var uwaga = JednaUwaga(graf, WalidatorGrafuService.RegulaTekstAlternatywny);
 
-        Assert.Equal((PoziomUwagi.Ostrzezenie, RodzajRekordu.PunktRuchu, 2), (uwaga.Poziom, uwaga.Rekord, uwaga.RekordId));
-        Assert.Equal("zdjęcie hol.jpg punktu P2", uwaga.OpisRekordu); // link prowadzi do właściciela zdjęcia
+        Assert.Equal((PoziomUwagi.Ostrzezenie, RodzajRekordu.Zdjecie, 1), (uwaga.Poziom, uwaga.Rekord, uwaga.RekordId));
+        Assert.Equal("zdjęcie nr 1 punktu P2", uwaga.OpisRekordu); // link do formularza zdjęcia, opis wskazuje miejsce
     }
 
     [Fact]

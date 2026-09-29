@@ -35,6 +35,7 @@
                     <ul class="dzialania">
                         <li><a asp-controller="Kierunki" asp-action="Index" asp-route-punkt="@p.Id">Kierunki<span class="visually-hidden"> punktu @p.Kod</span></a></li>
                         <li><a asp-action="Edytuj" asp-route-id="@p.Id">Edytuj<span class="visually-hidden"> punkt @p.Kod</span></a></li>
+                        <li><a asp-controller="Zdjecia" asp-action="Index" asp-route-punkt="@p.Id">Zdjęcia<span class="visually-hidden"> punktu @p.Kod</span></a></li>
                         @if (p.CzyAktywny)
                         {
                             <li><a asp-action="Dezaktywuj" asp-route-id="@p.Id">Dezaktywuj<span class="visually-hidden"> punkt @p.Kod</span></a></li>

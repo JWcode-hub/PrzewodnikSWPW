@@ -33,6 +33,7 @@
                 <td>
                     <ul class="dzialania">
                         <li><a asp-action="Edytuj" asp-route-id="@s.Id">Edytuj<span class="visually-hidden"> salę @s.Symbol</span></a></li>
+                        <li><a asp-controller="Zdjecia" asp-action="Index" asp-route-sala="@s.Id">Zdjęcia<span class="visually-hidden"> sali @s.Symbol</span></a></li>
                         @if (s.CzyAktywna)
                         {
                             <li><a asp-action="Dezaktywuj" asp-route-id="@s.Id">Dezaktywuj<span class="visually-hidden"> salę @s.Symbol</span></a></li>

@@ -22,7 +22,7 @@ public sealed class PoleTagHelper(IHtmlGenerator generator) : TagHelper
     [HtmlAttributeName("for")]
     public ModelExpression For { get; set; } = null!;
 
-    /// <summary>text (domyślnie), textarea, checkbox, select, password, email, liczba-dziesietna.</summary>
+    /// <summary>text (domyślnie), textarea, checkbox, select, password, email, liczba, liczba-dziesietna, plik.</summary>
     [HtmlAttributeName("typ")]
     public string Typ { get; set; } = "text";
 
@@ -42,6 +42,14 @@ public sealed class PoleTagHelper(IHtmlGenerator generator) : TagHelper
     [HtmlAttributeName("wiersze")]
     public int Wiersze { get; set; } = 4;
 
+    /// <summary>Wymusza oznaczenie „(wymagane)”, gdy pole jest wymagane regułą, a nie atrybutem [Required] (np. plik zdjęcia).</summary>
+    [HtmlAttributeName("wymagane")]
+    public bool? Wymagane { get; set; }
+
+    /// <summary>Atrybut accept pola pliku — podpowiedź dla okna wyboru; o przyjęciu pliku decyduje serwer.</summary>
+    [HtmlAttributeName("akceptuj")]
+    public string? Akceptuj { get; set; }
+
     [ViewContext, HtmlAttributeNotBound]
     public ViewContext ViewContext { get; set; } = null!;
 
@@ -51,7 +59,7 @@ public sealed class PoleTagHelper(IHtmlGenerator generator) : TagHelper
         var id = TagBuilder.CreateSanitizedId(nazwa, "_");
         var etykieta = For.Metadata.DisplayName ?? For.Metadata.PropertyName ?? nazwa;
         var checkbox = Typ == "checkbox";
-        var wymagane = For.Metadata.IsRequired && !checkbox;
+        var wymagane = Wymagane ?? (For.Metadata.IsRequired && !checkbox);
 
         var blad = ViewContext.ViewData.ModelState.TryGetValue(nazwa, out var stan) && stan.Errors.Count > 0
             ? stan.Errors[0].ErrorMessage
@@ -81,6 +89,7 @@ public sealed class PoleTagHelper(IHtmlGenerator generator) : TagHelper
             "checkbox" => generator.GenerateCheckBox(ViewContext, For.ModelExplorer, nazwa, null, atrybuty),
             "select" => generator.GenerateSelect(ViewContext, For.ModelExplorer, PustaOpcja, nazwa, Elementy ?? [], false, atrybuty),
             "password" => generator.GeneratePassword(ViewContext, For.ModelExplorer, nazwa, null, atrybuty),
+            "plik" => PolePliku(nazwa, atrybuty),
             _ => generator.GenerateTextBox(ViewContext, For.ModelExplorer, nazwa, For.Model, null, Atrybuty(atrybuty)),
         };
 
@@ -113,6 +122,17 @@ public sealed class PoleTagHelper(IHtmlGenerator generator) : TagHelper
         if (Wskazowka is not null) tresc.AppendHtml($"<p id=\"{idWskazowki}\" class=\"wskazowka\">").Append(Wskazowka).AppendHtml("</p>");
         if (blad is not null) tresc.AppendHtml($"<p id=\"{idBledu}\" class=\"komunikat-bledu\">").Append($"Błąd: {blad}").AppendHtml("</p>");
         if (!checkbox) tresc.AppendHtml(kontrolka);
+    }
+
+    /// <summary>Pole pliku bez atrybutu value — przeglądarka i tak nie przyjmuje wartości początkowej pola pliku.</summary>
+    private TagBuilder PolePliku(string nazwa, Dictionary<string, object?> atrybuty)
+    {
+        var pole = new TagBuilder("input") { TagRenderMode = TagRenderMode.SelfClosing };
+        pole.Attributes["type"] = "file";
+        pole.Attributes["name"] = nazwa;
+        if (Akceptuj is not null) pole.Attributes["accept"] = Akceptuj;
+        foreach (var (klucz, wartosc) in atrybuty) pole.Attributes[klucz] = wartosc?.ToString();
+        return pole;
     }
 
     /// <summary>Typ pola tekstowego. Liczby dziesiętne jako tekst z inputmode — input type="number" nie przyjmuje przecinka.</summary>

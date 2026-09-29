@@ -1,0 +1,50 @@
+@model ZdjeciaViewModel
+@{
+    ViewData["Title"] = $"Zdjęcia: {Model.NazwaWlasciciela}";
+}
+
+<h1>Zdjęcia: @Model.NazwaWlasciciela</h1>
+<partial name="_Komunikat" />
+<p>Zdjęcie jest dodatkiem do opisu miejsca — opis tekstowy pozostaje podstawowym źródłem informacji.
+   Każde zdjęcie informacyjne ma tekst alternatywny, a każde — źródło i licencję (WN-39).</p>
+<p><a asp-action="Nowe" asp-route-punkt="@Model.PunktRuchuId" asp-route-sala="@Model.SalaId" class="btn btn-primary">Dodaj zdjęcie<span class="visually-hidden">: @Model.NazwaWlasciciela</span></a></p>
+
+@if (Model.Zdjecia.Count == 0)
+{
+    <p>To miejsce nie ma jeszcze zdjęć.</p>
+}
+else
+{
+    <div class="tabela-przewijana" tabindex="0" role="region" aria-label="Zdjęcia — tabela">
+        <table class="table tabela-admina">
+            <caption>Zdjęcia (@Model.Zdjecia.Count)</caption>
+            <thead>
+                <tr>
+                    <th scope="col">Zdjęcie</th>
+                    <th scope="col">Tekst alternatywny</th>
+                    <th scope="col">Źródło i licencja</th>
+                    <th scope="col">Wymiary</th>
+                    <th scope="col">Działania</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var z in Model.Zdjecia)
+                {
+                    <tr>
+                        <th scope="row">@z.Nazwa</th>
+                        <td>@(z.CzyDekoracyjne ? "zdjęcie dekoracyjne — czytnik ekranu je pomija" : z.TekstAlternatywny)</td>
+                        <td>@z.Zrodlo; @z.Licencja</td>
+                        <td>@(z.Szerokosc is null ? "nieznane" : $"{z.Szerokosc} × {z.Wysokosc} px")</td>
+                        <td>
+                            <ul class="dzialania">
+                                <li><a asp-action="Edytuj" asp-route-id="@z.Id">Edytuj<span class="visually-hidden"> @z.Nazwa</span></a></li>
+                            </ul>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+<p><a href="@Model.AdresPowrotu">@Model.TekstPowrotu</a></p>

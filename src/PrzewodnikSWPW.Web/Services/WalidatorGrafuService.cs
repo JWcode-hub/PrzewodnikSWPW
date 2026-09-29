@@ -13,7 +13,7 @@ public enum PoziomUwagi
     Ostrzezenie,
 }
 
-public enum RodzajRekordu { Budynek, PunktRuchu, Kierunek, Sala }
+public enum RodzajRekordu { Budynek, PunktRuchu, Kierunek, Sala, Zdjecie }
 
 /// <summary>Jedna uwaga walidatora z podpowiedzią, jak ją naprawić, i wskazaniem rekordu do edycji.</summary>
 public sealed record UwagaWalidatora(
@@ -190,7 +190,7 @@ public sealed partial class WalidatorGrafuService(IAdministracjaRepozytorium rep
 
     /// <summary>
     /// Reguła 7 (zapytanie 8.4, P-02): zdjęcie informacyjne z tekstem alternatywnym krótszym niż 15 znaków.
-    /// Zdjęcia nie mają osobnego formularza — link prowadzi do edycji właściciela (punktu albo sali).
+    /// Link prowadzi do formularza zdjęcia; opis rekordu podaje właściciela, żeby redaktor wiedział, które to miejsce.
     /// </summary>
     public static IEnumerable<UwagaWalidatora> SprawdzTekstyAlternatywne(IEnumerable<Zdjecie> zdjecia, IEnumerable<PunktRuchu> punkty, IEnumerable<Sala> sale)
     {
@@ -198,9 +198,9 @@ public sealed partial class WalidatorGrafuService(IAdministracjaRepozytorium rep
         var symbole = sale.ToDictionary(s => s.Id, s => s.Symbol);
         foreach (var z in zdjecia.Where(z => !z.CzyDekoracyjne && (z.TekstAlternatywny ?? "").Trim().Length < MinDlugoscTekstuAlternatywnego))
         {
-            var (rekord, id, wlasciciel) = z.PunktRuchuId is int punkt
-                ? (RodzajRekordu.PunktRuchu, punkt, $"punktu {kody.GetValueOrDefault(punkt, $"#{punkt}")}")
-                : (RodzajRekordu.Sala, z.SalaId ?? 0, $"sali {symbole.GetValueOrDefault(z.SalaId ?? 0, $"#{z.SalaId}")}");
+            var wlasciciel = z.PunktRuchuId is int punkt
+                ? $"punktu {kody.GetValueOrDefault(punkt, $"#{punkt}")}"
+                : $"sali {symbole.GetValueOrDefault(z.SalaId ?? 0, $"#{z.SalaId}")}";
             var tekst = (z.TekstAlternatywny ?? "").Trim();
             yield return new UwagaWalidatora(PoziomUwagi.Ostrzezenie, RegulaTekstAlternatywny,
                 tekst.Length == 0
@@ -208,7 +208,7 @@ public sealed partial class WalidatorGrafuService(IAdministracjaRepozytorium rep
                     : $"Tekst alternatywny „{tekst}” ma {tekst.Length} znaków — za mało, by opisać, co widać na zdjęciu.",
                 $"Opisz treść zdjęcia w co najmniej {MinDlugoscTekstuAlternatywnego} znakach (co na nim widać i po co je pokazujemy). " +
                 "Jeśli zdjęcie niczego nie wnosi, oznacz je jako dekoracyjne.",
-                rekord, id, $"zdjęcie {Path.GetFileName(z.SciezkaPliku)} {wlasciciel}");
+                RodzajRekordu.Zdjecie, z.Id, $"zdjęcie nr {z.Id} {wlasciciel}");
         }
     }
 

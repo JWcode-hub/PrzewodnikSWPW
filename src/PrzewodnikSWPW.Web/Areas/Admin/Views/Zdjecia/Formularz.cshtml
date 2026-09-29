@@ -1,0 +1,44 @@
+@model ZdjecieFormularz
+@inject ZdjeciaService Zdjecia
+@{
+    var nowe = Model.Id is null;
+    var tytul = nowe ? $"Nowe zdjęcie: {Model.NazwaWlasciciela}" : $"Edycja zdjęcia nr {Model.Id}: {Model.NazwaWlasciciela}";
+    ViewData["Title"] = ViewData.ModelState.IsValid ? tytul : $"Błąd w formularzu – {tytul}";
+}
+
+<h1>@tytul</h1>
+<partial name="_PodsumowanieBledow" />
+
+@if (!nowe && Model.SciezkaPliku is not null)
+{
+    @* Podgląd: alt pusty, bo tekst alternatywny jest obok w polu formularza — czytnik nie przeczyta go dwa razy. *@
+    <figure class="podglad-zdjecia">
+        <img src="/media/@Model.SciezkaPliku" alt="" width="@Model.Szerokosc" height="@Model.Wysokosc" class="img-fluid" loading="lazy" />
+        <figcaption>Podgląd zdjęcia nr @Model.Id (@Model.Szerokosc × @Model.Wysokosc pikseli). Pliku nie można wymienić — dodaj nowe zdjęcie.</figcaption>
+    </figure>
+}
+
+<form method="post" enctype="multipart/form-data" novalidate class="formularz-admina">
+    <input type="hidden" asp-for="PunktRuchuId" />
+    <input type="hidden" asp-for="SalaId" />
+
+    @if (nowe)
+    {
+        <pole for="Plik" typ="plik" wymagane="true" akceptuj="@ZdjeciaService.AtrybutAccept"
+              wskazowka="@($"JPG, PNG albo WebP, najwyżej {Zdjecia.MaksRozmiarMB} MB. Serwer nie zmniejsza zdjęć — przygotuj je o szerokości do 1600 pikseli. Nazwę pliku i dane EXIF (np. położenie GPS) serwer usuwa.")" />
+    }
+
+    <pole for="TekstAlternatywny" typ="textarea" wiersze="3" wymagane="true"
+          wskazowka="1–2 zdania: co widać, strona w kadrze (po lewej, po prawej, w głębi) i punkt orientacyjny. Dobrze: „Korytarz z jasną posadzką. Po prawej drzwi z tabliczką A12. W głębi korytarz biegnie dalej prosto.” Źle: „Zdjęcie korytarza”, „IMG_2043.jpg”, „Drzwi”. Nie pisz „zdjęcie przedstawia”. Puste tylko przy zdjęciu dekoracyjnym." />
+    <pole for="CzyDekoracyjne" typ="checkbox" />
+    <pole for="OpisRozszerzony" typ="textarea" wiersze="3"
+          wskazowka="Wyświetlany pod zdjęciem. Użyj, gdy opis nie mieści się w 1–2 zdaniach tekstu alternatywnego." />
+    <pole for="Zrodlo" wskazowka="Kto zrobił zdjęcie albo skąd pochodzi, np. „Wirtualny spacer 3D, wykonawca: …” albo „Zespół projektu”." />
+    <pole for="Licencja" wskazowka="Na jakiej podstawie publikujemy zdjęcie, np. „Pisemna zgoda z 2026-10-01” albo „CC BY 4.0”. Zdjęcia ze spaceru 3D wymagają zgody właściciela praw (P-06)." />
+    <pole for="Kolejnosc" typ="liczba" wskazowka="Mniejsza liczba — wyżej na stronie. Pierwsze zdjęcie widać bez przewijania." />
+
+    <div class="przyciski-formularza">
+        <button type="submit" class="btn btn-primary">@(nowe ? "Wgraj zdjęcie" : "Zapisz zmiany")</button>
+        <a asp-action="Index" asp-route-punkt="@Model.PunktRuchuId" asp-route-sala="@Model.SalaId">Anuluj i wróć do zdjęć: @Model.NazwaWlasciciela</a>
+    </div>
+</form>

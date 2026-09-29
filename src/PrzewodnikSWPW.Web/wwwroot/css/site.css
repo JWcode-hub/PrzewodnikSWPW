@@ -527,3 +527,10 @@ html[data-animacje="ograniczone"] *::after {
   transition-duration: 0.01ms !important;
   scroll-behavior: auto !important;
 }
+
+/* --- Zdjęcia (WF-26) ------------------------------------------------------
+   width/height w <img> rezerwują miejsce — height: auto zachowuje proporcje
+   przy pomniejszeniu, więc tekst pod zdjęciem nie przeskakuje (P-13). */
+figure img {
+  height: auto;
+}

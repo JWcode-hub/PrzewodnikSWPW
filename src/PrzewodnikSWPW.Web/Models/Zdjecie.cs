@@ -21,8 +21,8 @@ public class Zdjecie : IValidatableObject
     public Sala? Sala { get; set; }
 
     /// <summary>
-    /// Rdzeń nazwy nadany przez serwer, bez rozszerzenia, np. „zdjecia/3f2a…” (D-09). Pliki wariantów:
-    /// <c>{rdzeń}-{szerokość}.webp</c> i <c>.jpg</c> w katalogu <c>wwwroot/media</c>.
+    /// Nazwa nadana przez serwer, względem katalogu /media, np. „zdjecia/3f2a….jpg” (D-10) — jeden plik,
+    /// rozszerzenie z rozpoznanej zawartości, metadane usunięte przy zapisie.
     /// </summary>
     [Required(ErrorMessage = Komunikaty.Wymagane)]
     [StringLength(400, ErrorMessage = Komunikaty.MaksDlugosc)]
@@ -52,7 +52,7 @@ public class Zdjecie : IValidatableObject
     [Display(Name = "Licencja")]
     public string Licencja { get; set; } = string.Empty;
 
-    /// <summary>Wymiary największego wariantu — atrybuty width/height i układ współrzędnych obszarów aktywnych (D-09).</summary>
+    /// <summary>Wymiary obrazu w orientacji wyświetlanej — atrybuty width/height i układ współrzędnych obszarów aktywnych (D-09, D-10).</summary>
     public int? Szerokosc { get; set; }
 
     public int? Wysokosc { get; set; }

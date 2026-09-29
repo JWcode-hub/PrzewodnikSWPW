@@ -24,6 +24,9 @@ public sealed partial class AplikacjaFixture : IAsyncLifetime
     public BazaTestowaFixture Baza { get; } = new();
     public WebApplicationFactory<Program> Fabryka { get; private set; } = null!;
 
+    /// <summary>Katalog /media na czas testów — wgrywane zdjęcia nie trafiają do wwwroot w repozytorium.</summary>
+    public string KatalogMedia { get; } = Path.Combine(Path.GetTempPath(), $"przewodnik-testy-media-{Guid.NewGuid():N}");
+
     /// <summary>Hasło wspólne dla kont testowych — losowe przy każdym uruchomieniu testów.</summary>
     public string Haslo { get; } = $"Test-{Convert.ToHexString(RandomNumberGenerator.GetBytes(12))}-a1!";
 
@@ -32,7 +35,8 @@ public sealed partial class AplikacjaFixture : IAsyncLifetime
         await Baza.InitializeAsync();
         Fabryka = new WebApplicationFactory<Program>().WithWebHostBuilder(b => b
             .UseEnvironment("Testy")
-            .UseSetting("ConnectionStrings:Default", Baza.LancuchPolaczenia));
+            .UseSetting("ConnectionStrings:Default", Baza.LancuchPolaczenia)
+            .UseSetting("Zdjecia:KatalogMedia", KatalogMedia));
 
         using var zakres = Fabryka.Services.CreateScope();
         var uzytkownicy = zakres.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
@@ -70,6 +74,7 @@ public sealed partial class AplikacjaFixture : IAsyncLifetime
     {
         await Fabryka.DisposeAsync();
         await Baza.DisposeAsync();
+        if (Directory.Exists(KatalogMedia)) Directory.Delete(KatalogMedia, recursive: true);
     }
 
     [GeneratedRegex("name=\"__RequestVerificationToken\" type=\"hidden\" value=\"([^\"]+)\"")]
