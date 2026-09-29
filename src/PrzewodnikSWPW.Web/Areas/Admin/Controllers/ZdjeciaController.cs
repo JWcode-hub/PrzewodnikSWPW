@@ -7,7 +7,8 @@ using PrzewodnikSWPW.Web.ViewModels.Admin;
 namespace PrzewodnikSWPW.Web.Areas.Admin.Controllers;
 
 /// <summary>
-/// Zdjęcia punktów i sal (WF-26, D-09, D-10). Zdjęć nie usuwamy (D-04).
+/// Zdjęcia punktów i sal oraz ich aktywne obszary (WF-26, WF-27, D-09, D-10). Zdjęć nie usuwamy (D-04);
+/// aktywne obszary tak — to fragment zdjęcia, nie rekord grafu.
 /// </summary>
 [Route("admin/zdjecia")]
 public class ZdjeciaController(ZdjeciaService zdjecia) : AdminKontroler
@@ -102,7 +103,116 @@ public class ZdjeciaController(ZdjeciaService zdjecia) : AdminKontroler
         return View("Formularz", model);
     }
 
+    // --- Aktywne obszary (WF-27) -------------------------------------------------------------------------
+
+    [Authorize(Roles = Role.Administrator)]
+    [HttpGet("{id:int}/obszary")]
+    public async Task<IActionResult> Obszary(int id, CancellationToken ct)
+    {
+        if (await zdjecia.PobierzZdjecie(id, ct) is not { PunktRuchu: { } punkt } z) return NotFound();
+        PrzekazKomunikat();
+        var obszary = z.ObszaryAktywne.OrderBy(o => o.Id)
+            .Select(o => new ObszarWiersz(o.Id, o.Etykieta, $"{o.Kierunek.Azymut}°", WspolrzedneObszaru.Ksztalty.GetValueOrDefault(o.Ksztalt, o.Ksztalt), o.Wspolrzedne))
+            .ToList();
+        return View(new ObszaryViewModel(id, NazwyZdjec.Nazwa(z), $"punkt {punkt.Kod}", punkt.Id, obszary));
+    }
+
+    [Authorize(Roles = Role.Administrator)]
+    [HttpGet("{id:int}/obszary/nowy")]
+    public async Task<IActionResult> NowyObszar(int id, CancellationToken ct) =>
+        await zdjecia.PobierzZdjecie(id, ct) is { PunktRuchuId: not null } z
+            ? View("FormularzObszaru", await Uzupelnij(new ObszarFormularz { ZdjecieId = id }, z, ct))
+            : NotFound();
+
+    [Authorize(Roles = Role.Administrator)]
+    [HttpPost("{id:int}/obszary/nowy")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> NowyObszar(int id, ObszarFormularz model, CancellationToken ct)
+    {
+        if (await zdjecia.PobierzZdjecie(id, ct) is not { PunktRuchuId: not null } z) return NotFound();
+        model.ZdjecieId = id;
+        if (ModelState.IsValid)
+        {
+            var wynik = await zdjecia.ZapiszObszar(model.NaEncje(new ObszarAktywny()), ct);
+            if (wynik.Sukces)
+            {
+                Komunikat($"Dodano obszar „{model.Etykieta!.Trim()}”.");
+                return RedirectToAction(nameof(Obszary), new { id });
+            }
+            DodajBledy(wynik);
+        }
+        return View("FormularzObszaru", await Uzupelnij(model, z, ct));
+    }
+
+    [Authorize(Roles = Role.Administrator)]
+    [HttpGet("obszary/{id:int}/edytuj")]
+    public async Task<IActionResult> EdytujObszar(int id, CancellationToken ct) =>
+        await zdjecia.PobierzObszar(id, ct) is { } o
+            ? View("FormularzObszaru", await Uzupelnij(ObszarFormularz.Z(o), o.Zdjecie, ct))
+            : NotFound();
+
+    [Authorize(Roles = Role.Administrator)]
+    [HttpPost("obszary/{id:int}/edytuj")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> EdytujObszar(int id, ObszarFormularz model, CancellationToken ct)
+    {
+        if (await zdjecia.PobierzObszar(id, ct) is not { } o) return NotFound();
+        model.Id = id;
+        model.ZdjecieId = o.ZdjecieId; // obszaru nie przenosimy na inne zdjęcie
+        if (ModelState.IsValid)
+        {
+            var wynik = await zdjecia.ZapiszObszar(model.NaEncje(o), ct);
+            if (wynik.Sukces)
+            {
+                Komunikat($"Zapisano obszar „{o.Etykieta}”.");
+                return RedirectToAction(nameof(Obszary), new { id = o.ZdjecieId });
+            }
+            DodajBledy(wynik);
+        }
+        return View("FormularzObszaru", await Uzupelnij(model, o.Zdjecie, ct));
+    }
+
+    [Authorize(Roles = Role.Administrator)]
+    [HttpGet("obszary/{id:int}/usun")]
+    public async Task<IActionResult> UsunObszar(int id, CancellationToken ct)
+    {
+        if (await zdjecia.PobierzObszar(id, ct) is not { } o) return NotFound();
+        return View("Potwierdzenie", new PotwierdzenieViewModel(
+            $"Usunięcie obszaru „{o.Etykieta}”",
+            $"Czy na pewno usunąć obszar „{o.Etykieta}” ze zdjęcia nr {o.ZdjecieId}?",
+            "Obszar zniknie ze zdjęcia w spacerze. Kierunek, do którego prowadził, zostaje bez zmian na liście kierunków.",
+            null,
+            $"Tak, usuń obszar „{o.Etykieta}”",
+            Url.Action(nameof(UsunObszar), new { id })!,
+            Url.Action(nameof(Obszary), new { id = o.ZdjecieId })!,
+            "Anuluj i wróć do listy obszarów"));
+    }
+
+    [Authorize(Roles = Role.Administrator)]
+    [HttpPost("obszary/{id:int}/usun")]
+    [ValidateAntiForgeryToken]
+    [ActionName(nameof(UsunObszar))]
+    public async Task<IActionResult> UsunObszarPotwierdzone(int id, CancellationToken ct)
+    {
+        if (await zdjecia.PobierzObszar(id, ct) is not { } o) return NotFound();
+        var zdjecieId = o.ZdjecieId;
+        var wynik = await zdjecia.UsunObszar(id, ct);
+        Komunikat(wynik.Sukces ? "Obszar usunięto." : wynik.Bledy[0].Komunikat);
+        return RedirectToAction(nameof(Obszary), new { id = zdjecieId });
+    }
+
     // --- pomocnicze --------------------------------------------------------------------------------------
+
+    private async Task<ObszarFormularz> Uzupelnij(ObszarFormularz model, Zdjecie z, CancellationToken ct)
+    {
+        model.NazwaZdjecia = $"{NazwyZdjec.Nazwa(z)} (punkt {z.PunktRuchu?.Kod})";
+        model.SciezkaPliku = z.SciezkaPliku;
+        model.TekstAlternatywnyZdjecia = z.TekstAlternatywny;
+        model.Szerokosc = z.Szerokosc;
+        model.Wysokosc = z.Wysokosc;
+        model.Kierunki = Lista(await zdjecia.KierunkiDlaObszarow(z.PunktRuchuId!.Value, ct), k => k.Id, NazwyZdjec.OpisKierunku);
+        return model;
+    }
 
     private static async Task<WgrywanyPlik?> OdczytajPlik(IFormFile? plik, CancellationToken ct)
     {

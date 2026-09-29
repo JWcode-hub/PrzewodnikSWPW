@@ -5,7 +5,7 @@ using PrzewodnikSWPW.Web.Services;
 
 namespace PrzewodnikSWPW.Web.ViewModels.Admin;
 
-// Zdjęcia (WF-26). Jak pozostałe formularze panelu: tylko pola edytowalne
+// Zdjęcia i aktywne obszary (WF-26, WF-27). Jak pozostałe formularze panelu: tylko pola edytowalne
 // i jawne przepisanie na encję (NaEncje). Nazwy pliku ani wymiarów formularz nie przyjmuje — ustala je serwer.
 
 public sealed class ZdjecieFormularz : IValidatableObject
@@ -99,6 +99,59 @@ public sealed class ZdjecieFormularz : IValidatableObject
     }
 }
 
+public sealed class ObszarFormularz
+{
+    public int? Id { get; set; }
+
+    public int ZdjecieId { get; set; }
+
+    [Required(ErrorMessage = "Wybierz z listy kierunek, do którego prowadzi obszar.")]
+    [Display(Name = "Kierunek, do którego prowadzi obszar")]
+    public int? KierunekId { get; set; }
+
+    [Required(ErrorMessage = "Wybierz kształt obszaru z listy.")]
+    [RegularExpression("^(rect|circle|poly)$", ErrorMessage = "Wybierz kształt obszaru z listy.")]
+    [Display(Name = "Kształt obszaru")]
+    public string Ksztalt { get; set; } = "rect";
+
+    [Required(ErrorMessage = Komunikaty.Wymagane)]
+    [StringLength(400, ErrorMessage = Komunikaty.MaksDlugosc)]
+    [Display(Name = "Współrzędne obszaru w pikselach zdjęcia")]
+    public string? Wspolrzedne { get; set; }
+
+    /// <summary>Bez etykiety obszar jest dla czytnika ekranu niewidoczny — to jego tekst alternatywny (atrybut alt elementu &lt;area&gt;).</summary>
+    [Required(ErrorMessage = Komunikaty.Wymagane)]
+    [StringLength(200, ErrorMessage = Komunikaty.MaksDlugosc)]
+    [Display(Name = "Etykieta obszaru (czytana użytkownikowi)")]
+    public string? Etykieta { get; set; }
+
+    // Tylko do wyświetlenia.
+    public string NazwaZdjecia { get; set; } = string.Empty;
+    public string SciezkaPliku { get; set; } = string.Empty;
+    public string TekstAlternatywnyZdjecia { get; set; } = string.Empty;
+    public int? Szerokosc { get; set; }
+    public int? Wysokosc { get; set; }
+    public IEnumerable<SelectListItem> Kierunki { get; set; } = [];
+
+    public static IEnumerable<SelectListItem> Ksztalty =>
+        WspolrzedneObszaru.Ksztalty.Select(k => new SelectListItem(k.Value, k.Key));
+
+    public static ObszarFormularz Z(ObszarAktywny o) => new()
+    {
+        Id = o.Id, ZdjecieId = o.ZdjecieId, KierunekId = o.KierunekId, Ksztalt = o.Ksztalt, Wspolrzedne = o.Wspolrzedne, Etykieta = o.Etykieta,
+    };
+
+    public ObszarAktywny NaEncje(ObszarAktywny o)
+    {
+        o.ZdjecieId = ZdjecieId;
+        o.KierunekId = KierunekId!.Value;
+        o.Ksztalt = Ksztalt;
+        o.Wspolrzedne = Wspolrzedne!.Trim();
+        o.Etykieta = Etykieta!.Trim();
+        return o;
+    }
+}
+
 public sealed record ZdjecieWiersz(int Id, string Nazwa, string? TekstAlternatywny, bool CzyDekoracyjne, string Zrodlo, string Licencja,
     int? Szerokosc, int? Wysokosc, int LiczbaObszarow)
 {
@@ -109,8 +162,17 @@ public sealed record ZdjecieWiersz(int Id, string Nazwa, string? TekstAlternatyw
 public sealed record ZdjeciaViewModel(string NazwaWlasciciela, int? PunktRuchuId, int? SalaId, IReadOnlyList<ZdjecieWiersz> Zdjecia,
     string AdresPowrotu, string TekstPowrotu);
 
+public sealed record ObszarWiersz(int Id, string Etykieta, string Kierunek, string Ksztalt, string Wspolrzedne);
+
+public sealed record ObszaryViewModel(int ZdjecieId, string NazwaZdjecia, string NazwaWlasciciela, int PunktRuchuId,
+    IReadOnlyList<ObszarWiersz> Obszary);
+
 public static class NazwyZdjec
 {
     /// <summary>Nazwa zdjęcia w linkach i nagłówkach panelu — stała i jednoznaczna (numer rekordu).</summary>
     public static string Nazwa(Zdjecie z) => $"zdjęcie nr {z.Id}";
+
+    /// <summary>Opis kierunku na liście wyboru obszaru, np. „90° → A-0-P05 Korytarz przy sali A12 (nieaktywny)”.</summary>
+    public static string OpisKierunku(Kierunek k) =>
+        $"{k.Azymut}° → {(k.PunktDocelowy is { } p ? $"{p.Kod} {p.Nazwa}" : $"sala {k.SalaDocelowa?.Symbol}")}{(k.CzyAktywny ? "" : " (nieaktywny)")}";
 }

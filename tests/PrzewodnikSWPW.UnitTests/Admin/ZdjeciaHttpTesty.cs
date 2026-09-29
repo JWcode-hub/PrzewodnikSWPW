@@ -7,7 +7,7 @@ using static PrzewodnikSWPW.UnitTests.Services.ObrazyTestowe;
 
 namespace PrzewodnikSWPW.UnitTests.Admin;
 
-/// <summary>Wgrywanie zdjęć przez HTTP (WF-26, WN-39, D-10).</summary>
+/// <summary>Wgrywanie zdjęć i edytor aktywnych obszarów przez HTTP (WF-26, WF-27, WN-39, D-10).</summary>
 [Collection(AplikacjaKolekcja.Nazwa)]
 [Trait("Kategoria", "Integracyjne")]
 public class ZdjeciaHttpTesty(AplikacjaFixture app)
@@ -165,4 +165,80 @@ public class ZdjeciaHttpTesty(AplikacjaFixture app)
         Assert.Equal(plikow, LiczbaPlikow());
     }
 
+    // --- Aktywne obszary (WF-27) --------------------------------------------------------------------------
+
+    private async Task<(int ZdjecieId, int KierunekPunktu, int KierunekInnegoPunktu)> ZdjecieZKierunkami(HttpClient klient)
+    {
+        var punkt = await IdPunktu("A-0-P04");
+        await Wgraj(klient, punkt, Pola(), Jpeg(640, 480));
+        await using var db = app.Baza.UtworzKontekst();
+        var zdjecie = await db.Zdjecia.Where(z => z.PunktRuchuId == punkt).MaxAsync(z => z.Id);
+        var wlasny = await db.Kierunki.Where(k => k.PunktZrodlowyId == punkt && k.CzyAktywny).Select(k => k.Id).FirstAsync();
+        var obcy = await db.Kierunki.Where(k => k.PunktZrodlowyId != punkt).Select(k => k.Id).FirstAsync();
+        return (zdjecie, wlasny, obcy);
+    }
+
+    private static async Task<HttpResponseMessage> DodajObszar(HttpClient klient, int zdjecie, Dictionary<string, string> pola)
+    {
+        var formularz = await klient.GetStringAsync($"/admin/zdjecia/{zdjecie}/obszary/nowy");
+        pola["__RequestVerificationToken"] = AplikacjaFixture.Token(formularz);
+        return await klient.PostAsync($"/admin/zdjecia/{zdjecie}/obszary/nowy", new FormUrlEncodedContent(pola));
+    }
+
+    [Fact]
+    public async Task FormularzObszaru_PolaDoWpisaniaZKlawiatury_InstrukcjaMyszyUkrytaBezJavaScriptu()
+    {
+        var klient = await Administrator();
+        var (zdjecie, _, _) = await ZdjecieZKierunkami(klient);
+
+        var html = await klient.GetStringAsync($"/admin/zdjecia/{zdjecie}/obszary/nowy");
+
+        Assert.Matches("<label[^>]*for=\"Etykieta\"[^>]*>Etykieta obszaru \\(czytana użytkownikowi\\) \\(wymagane\\)</label>", html);
+        Assert.Matches("<input[^>]*id=\"Wspolrzedne\"[^>]*type=\"text\"|<input[^>]*type=\"text\"[^>]*id=\"Wspolrzedne\"", html);
+        Assert.Matches("<select[^>]*id=\"KierunekId\"", html);
+        Assert.Contains("zdjęcia o 640 × 480 pikseli", html);
+        Assert.Contains("<figcaption id=\"instrukcja-zaznaczania\" hidden>", html);
+        Assert.Contains("/js/obszary.js", html);
+    }
+
+    [Fact]
+    public async Task ObszarWpisanyZKlawiatury_Zapisany_WidocznyNaLiscie()
+    {
+        var klient = await Administrator();
+        var (zdjecie, kierunek, _) = await ZdjecieZKierunkami(klient);
+
+        var odpowiedz = await DodajObszar(klient, zdjecie, new()
+        {
+            ["Etykieta"] = " Drzwi do sali A12, pracownia komputerowa ", ["KierunekId"] = kierunek.ToString(),
+            ["Ksztalt"] = "rect", ["Wspolrzedne"] = "120, 80, 360, 400",
+        });
+
+        Assert.Equal(HttpStatusCode.Redirect, odpowiedz.StatusCode);
+        var lista = await klient.GetStringAsync(odpowiedz.Headers.Location!.OriginalString);
+        Assert.Contains("<th scope=\"row\">Drzwi do sali A12, pracownia komputerowa</th>", lista);
+        Assert.Contains("<td>120,80,360,400</td>", lista);
+        Assert.Contains("<td>prostokąt</td>", lista);
+    }
+
+    [Fact]
+    public async Task ObszarBezEtykiety_KierunekInnegoPunktu_WspolrzednePozaZdjeciem_Odrzucony()
+    {
+        var klient = await Administrator();
+        var (zdjecie, kierunek, obcy) = await ZdjecieZKierunkami(klient);
+
+        var bezEtykiety = await (await DodajObszar(klient, zdjecie, new()
+        {
+            ["Etykieta"] = "", ["KierunekId"] = kierunek.ToString(), ["Ksztalt"] = "rect", ["Wspolrzedne"] = "1,1,10,10",
+        })).Content.ReadAsStringAsync();
+        var zlyKierunekIWspolrzedne = await (await DodajObszar(klient, zdjecie, new()
+        {
+            ["Etykieta"] = "Drzwi", ["KierunekId"] = obcy.ToString(), ["Ksztalt"] = "rect", ["Wspolrzedne"] = "600,400,700,470",
+        })).Content.ReadAsStringAsync();
+
+        Assert.Contains("Błąd: Pole „Etykieta obszaru (czytana użytkownikowi)” jest wymagane.", bezEtykiety);
+        Assert.Contains("Błąd: Wybierz z listy kierunek wychodzący z punktu, do którego należy zdjęcie.", zlyKierunekIWspolrzedne);
+        Assert.Contains("Błąd: Współrzędne wychodzą poza zdjęcie — ma ono 640 × 480 pikseli.", zlyKierunekIWspolrzedne);
+        await using var db = app.Baza.UtworzKontekst();
+        Assert.False(await db.ObszaryAktywne.AnyAsync(o => o.ZdjecieId == zdjecie));
+    }
 }

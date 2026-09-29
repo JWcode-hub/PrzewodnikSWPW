@@ -3,7 +3,7 @@ using static PrzewodnikSWPW.UnitTests.Services.ObrazyTestowe;
 
 namespace PrzewodnikSWPW.UnitTests.Services;
 
-/// <summary>Reguły wgrywanego pliku (WF-26) — bez bazy i bez HTTP.</summary>
+/// <summary>Reguły wgrywanego pliku (WF-26) i współrzędnych aktywnych obszarów (WF-27) — bez bazy i bez HTTP.</summary>
 public class ZdjeciaServiceTesty
 {
     private const long Limit = 3 * 1024 * 1024;
@@ -81,4 +81,42 @@ public class ZdjeciaServiceTesty
         Assert.Equal("Rozszerzenie .jpg nie zgadza się z zawartością pliku (to obraz PNG). Zapisz zdjęcie ponownie w programie graficznym.", blad);
     }
 
+    // --- Współrzędne obszarów -----------------------------------------------------------------------------
+
+    [Theory]
+    [InlineData("rect", "10, 20 ,30,40", "10,20,30,40")]
+    [InlineData("circle", "50,50,10", "50,50,10")]
+    [InlineData("poly", "0,0,100,0,50,80", "0,0,100,0,50,80")]
+    [InlineData("rect", "0,0,640,480", "0,0,640,480")] // krawędź zdjęcia jest dozwolona
+    public void PoprawneWspolrzedne_Znormalizowane(string ksztalt, string tekst, string oczekiwane)
+    {
+        Assert.Equal((oczekiwane, null), WspolrzedneObszaru.Sprawdz(ksztalt, tekst, 640, 480));
+    }
+
+    [Theory]
+    [InlineData("rect", "10,20,30", "czterech liczb")]
+    [InlineData("rect", "30,20,10,40", "na prawo i niżej")]
+    [InlineData("rect", "10,20,-30,40", "liczby całkowite")]
+    [InlineData("rect", "10,20,30.5,40", "liczby całkowite")]
+    [InlineData("rect", "", "liczby całkowite")]
+    [InlineData("circle", "50,50", "trzech liczb")]
+    [InlineData("circle", "50,50,0", "Promień")]
+    [InlineData("poly", "0,0,100,0", "trzech punktów")]
+    [InlineData("poly", "0,0,100,0,50", "trzech punktów")]
+    [InlineData("rect", "600,400,700,470", "poza zdjęcie — ma ono 640 × 480 pikseli")]
+    [InlineData("circle", "650,10,5", "poza zdjęcie")]
+    [InlineData("triangle", "1,2,3", "kształt")]
+    public void NiepoprawneWspolrzedne_BladZWyjasnieniem(string ksztalt, string tekst, string fragmentBledu)
+    {
+        var (wspolrzedne, blad) = WspolrzedneObszaru.Sprawdz(ksztalt, tekst, 640, 480);
+
+        Assert.Null(wspolrzedne);
+        Assert.Contains(fragmentBledu, blad);
+    }
+
+    [Fact]
+    public void NieznaneWymiaryZdjecia_SprawdzanyTylkoFormat()
+    {
+        Assert.Equal(("5000,5000,6000,6000", null), WspolrzedneObszaru.Sprawdz("rect", "5000,5000,6000,6000", null, null));
+    }
 }

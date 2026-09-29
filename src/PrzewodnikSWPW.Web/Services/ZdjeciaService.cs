@@ -10,7 +10,7 @@ namespace PrzewodnikSWPW.Web.Services;
 public sealed record WgrywanyPlik(string NazwaOryginalna, string TypMime, byte[] Dane);
 
 /// <summary>
-/// Zdjęcia w panelu administratora (WF-26, WN-39, D-09, D-10).
+/// Zdjęcia i aktywne obszary w panelu administratora (WF-26, WF-27, WN-39, D-09, D-10).
 /// Plik jest sprawdzany trzy razy niezależnie: rozszerzenie z białej listy, typ MIME z białej listy
 /// i rozpoznana zawartość — wszystkie trzy muszą wskazywać ten sam format.
 /// </summary>
@@ -138,4 +138,49 @@ public sealed class ZdjeciaService(IAdministracjaRepozytorium repo, IMagazynZdje
         return null;
     }
 
+    // --- Aktywne obszary (WF-27) --------------------------------------------------------------------------
+
+    /// <summary>Kierunki, do których może prowadzić obszar — wychodzące z punktu, do którego należy zdjęcie.</summary>
+    public Task<List<Kierunek>> KierunkiDlaObszarow(int punktId, CancellationToken ct = default) =>
+        repo.Zapytanie<Kierunek>().AsNoTracking().Include(k => k.PunktDocelowy).Include(k => k.SalaDocelowa)
+            .Where(k => k.PunktZrodlowyId == punktId).OrderBy(k => k.Azymut).ToListAsync(ct);
+
+    public Task<ObszarAktywny?> PobierzObszar(int id, CancellationToken ct = default) =>
+        repo.Zapytanie<ObszarAktywny>().Include(o => o.Zdjecie).ThenInclude(z => z.PunktRuchu).Include(o => o.Kierunek)
+            .FirstOrDefaultAsync(o => o.Id == id, ct);
+
+    /// <summary>Dodaje albo zapisuje obszar. Kierunek musi wychodzić z punktu zdjęcia, współrzędne — mieścić się w zdjęciu.</summary>
+    public async Task<WynikOperacji> ZapiszObszar(ObszarAktywny o, CancellationToken ct = default)
+    {
+        var zdjecie = await repo.Zapytanie<Zdjecie>().AsNoTracking().FirstOrDefaultAsync(z => z.Id == o.ZdjecieId, ct);
+        if (zdjecie is null) return WynikOperacji.Blad("", "Nie znaleziono zdjęcia.");
+        if (zdjecie.PunktRuchuId is not int punkt)
+            return WynikOperacji.Blad("", "Aktywne obszary można dodać tylko do zdjęcia punktu ruchu — prowadzą w jeden z jego kierunków.");
+
+        var bledy = new List<BladPola>();
+        if (!await repo.Zapytanie<Kierunek>().AnyAsync(k => k.Id == o.KierunekId && k.PunktZrodlowyId == punkt, ct))
+            bledy.Add(new BladPola(nameof(ObszarAktywny.KierunekId), "Wybierz z listy kierunek wychodzący z punktu, do którego należy zdjęcie."));
+        var (wspolrzedne, blad) = WspolrzedneObszaru.Sprawdz(o.Ksztalt, o.Wspolrzedne, zdjecie.Szerokosc, zdjecie.Wysokosc);
+        if (blad is not null) bledy.Add(new BladPola(nameof(ObszarAktywny.Wspolrzedne), blad));
+        if (bledy.Count > 0) return new WynikOperacji(bledy);
+
+        o.Wspolrzedne = wspolrzedne!;
+        o.Etykieta = o.Etykieta.Trim();
+        if (o.Id == 0) repo.Dodaj(o);
+        await repo.ZapiszAsync(ct);
+        return WynikOperacji.Ok();
+    }
+
+    /// <summary>
+    /// Obszar usuwamy fizycznie: to fragment zdjęcia, nie rekord grafu — D-04 i usuwanie logiczne dotyczą
+    /// kierunków, zdjęć i utrudnień. Zmiana i tak trafia do rejestru zmian (audyt).
+    /// </summary>
+    public async Task<WynikOperacji> UsunObszar(int id, CancellationToken ct = default)
+    {
+        var o = await repo.ZnajdzAsync<ObszarAktywny>(id, ct);
+        if (o is null) return WynikOperacji.Blad("", "Nie znaleziono obszaru.");
+        repo.Usun(o);
+        await repo.ZapiszAsync(ct);
+        return WynikOperacji.Ok();
+    }
 }

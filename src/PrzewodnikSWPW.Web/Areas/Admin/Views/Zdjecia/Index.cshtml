@@ -24,6 +24,7 @@ else
                     <th scope="col">Tekst alternatywny</th>
                     <th scope="col">Źródło i licencja</th>
                     <th scope="col">Wymiary</th>
+                    @if (Model.PunktRuchuId is not null) { <th scope="col">Aktywne obszary</th> }
                     <th scope="col">Działania</th>
                 </tr>
             </thead>
@@ -35,9 +36,14 @@ else
                         <td>@(z.CzyDekoracyjne ? "zdjęcie dekoracyjne — czytnik ekranu je pomija" : z.TekstAlternatywny)</td>
                         <td>@z.Zrodlo; @z.Licencja</td>
                         <td>@(z.Szerokosc is null ? "nieznane" : $"{z.Szerokosc} × {z.Wysokosc} px")</td>
+                        @if (Model.PunktRuchuId is not null) { <td>@z.LiczbaObszarow</td> }
                         <td>
                             <ul class="dzialania">
                                 <li><a asp-action="Edytuj" asp-route-id="@z.Id">Edytuj<span class="visually-hidden"> @z.Nazwa</span></a></li>
+                                @if (Model.PunktRuchuId is not null)
+                                {
+                                    <li><a asp-action="Obszary" asp-route-id="@z.Id">Aktywne obszary<span class="visually-hidden">: @z.Nazwa</span></a></li>
+                                }
                             </ul>
                         </td>
                     </tr>

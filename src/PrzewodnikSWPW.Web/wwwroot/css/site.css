@@ -528,9 +528,25 @@ html[data-animacje="ograniczone"] *::after {
   scroll-behavior: auto !important;
 }
 
-/* --- Zdjęcia (WF-26) ------------------------------------------------------
+/* --- Zdjęcia i aktywne obszary (WF-26, WF-27) ------------------------------
    width/height w <img> rezerwują miejsce — height: auto zachowuje proporcje
    przy pomniejszeniu, więc tekst pod zdjęciem nie przeskakuje (P-13). */
 figure img {
   height: auto;
+}
+.edytor-obszarow {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+}
+.edytor-obszarow img {
+  cursor: crosshair;
+  touch-action: none;
+}
+/* Podwójna ramka (ciemna i jasna) — widoczna na jasnym i ciemnym fragmencie zdjęcia. */
+.edytor-obszarow__zaznaczenie {
+  position: absolute;
+  border: 2px solid #000;
+  box-shadow: 0 0 0 2px #fff, inset 0 0 0 2px #fff;
+  pointer-events: none;
 }

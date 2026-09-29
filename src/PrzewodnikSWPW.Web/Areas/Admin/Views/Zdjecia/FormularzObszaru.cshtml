@@ -1,0 +1,39 @@
+@model ObszarFormularz
+@{
+    var nowy = Model.Id is null;
+    var tytul = nowy ? $"Nowy aktywny obszar: {Model.NazwaZdjecia}" : $"Edycja obszaru „{Model.Etykieta}”: {Model.NazwaZdjecia}";
+    ViewData["Title"] = ViewData.ModelState.IsValid ? tytul : $"Błąd w formularzu – {tytul}";
+    var wymiary = Model.Szerokosc is null ? "nieznanych wymiarach" : $"{Model.Szerokosc} × {Model.Wysokosc} pikseli";
+}
+
+<h1>@tytul</h1>
+<partial name="_PodsumowanieBledow" />
+
+<p>Współrzędne podajesz w pikselach zdjęcia o @wymiary, licząc od lewego górnego rogu (0,0).
+   Formularz obsłużysz w całości z klawiatury.</p>
+
+<figure class="edytor-obszarow" data-edytor-obszarow data-szerokosc="@Model.Szerokosc" data-wysokosc="@Model.Wysokosc">
+    <img src="/media/@Model.SciezkaPliku" alt="@Model.TekstAlternatywnyZdjecia" width="@Model.Szerokosc" height="@Model.Wysokosc" class="img-fluid" />
+    @* Instrukcja zaznaczania myszą pojawia się tylko wtedy, gdy obraz obsługuje JavaScript (obszary.js). *@
+    <figcaption id="instrukcja-zaznaczania" hidden>Możesz też zaznaczyć prostokąt myszą: przeciągnij po zdjęciu, a współrzędne
+        wpiszą się w pole „Współrzędne obszaru w pikselach zdjęcia”. Pozostałe pola uzupełnij sam.</figcaption>
+</figure>
+
+<form method="post" novalidate class="formularz-admina">
+    <pole for="Etykieta"
+          wskazowka="Co jest w tym miejscu zdjęcia i dokąd prowadzi — czytnik ekranu przeczyta to jako nazwę linku, np. „Drzwi do sali A12, pracownia komputerowa”." />
+    <pole for="KierunekId" typ="select" elementy="Model.Kierunki" pusta-opcja="— wybierz kierunek —"
+          wskazowka="Kliknięcie obszaru działa jak wybór tego kierunku z listy pod zdjęciem." />
+    <pole for="Ksztalt" typ="select" elementy="ObszarFormularz.Ksztalty" />
+    <pole for="Wspolrzedne"
+          wskazowka="Prostokąt: x1,y1,x2,y2 — lewy górny i prawy dolny róg, np. 120,80,360,400. Koło: x,y,r — środek i promień. Wielokąt: x1,y1,x2,y2,x3,y3… — kolejne wierzchołki." />
+
+    <div class="przyciski-formularza">
+        <button type="submit" class="btn btn-primary">@(nowy ? "Dodaj obszar" : "Zapisz zmiany")</button>
+        <a asp-action="Obszary" asp-route-id="@Model.ZdjecieId">Anuluj i wróć do obszarów zdjęcia nr @Model.ZdjecieId</a>
+    </div>
+</form>
+
+@section Scripts {
+    <script src="~/js/obszary.js" asp-append-version="true"></script>
+}
