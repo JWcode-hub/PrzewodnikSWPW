@@ -25,6 +25,16 @@
 
     // e.code nie zależy od układu klawiatury (na macOS Option+2 daje e.key = „™”, ale e.code = „Digit2”).
     // Część klawiatur ekranowych i narzędzi wspomagających wysyła zdarzenia bez e.code — wtedy e.key.
+    // Alt+P — powtórz opis miejsca (D-02): ogłoszenie przez obszar aria-live, czytnik ekranu przeczyta je od razu.
+    if (e.code === 'KeyP' || (!e.code && (e.key === 'p' || e.key === 'P'))) {
+      var opis = document.getElementById('opis-miejsca');
+      if (opis && window.przewodnik) {
+        e.preventDefault();
+        window.przewodnik.oglos(opis.textContent.trim(), true);
+      }
+      return;
+    }
+
     var kierunek = SKROTY[e.code] || SKROTY['Digit' + e.key];
     if (!kierunek) { return; }
 
