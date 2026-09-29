@@ -15,7 +15,8 @@
 @foreach (var zdjecie in s.Zdjecia)
 {
     <figure>
-        <img src="@Zrodlo(zdjecie.SciezkaPliku)" alt="@(zdjecie.CzyDekoracyjne ? "" : zdjecie.TekstAlternatywny)" class="img-fluid" loading="lazy" />
+        <img src="@Zrodlo(zdjecie.SciezkaPliku)" alt="@(zdjecie.CzyDekoracyjne ? "" : zdjecie.TekstAlternatywny)"
+             width="@zdjecie.Szerokosc" height="@zdjecie.Wysokosc" class="img-fluid" loading="lazy" decoding="async" />
         @if (!zdjecie.CzyDekoracyjne)
         {
             <figcaption>@(zdjecie.OpisRozszerzony ?? $"Zdjęcie: {s.Nazwa}.")</figcaption>

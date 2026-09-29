@@ -39,7 +39,18 @@ public sealed record ZdjecieMiejsca(
     string SciezkaPliku,
     string TekstAlternatywny,
     bool CzyDekoracyjne,
-    string? OpisRozszerzony);
+    string? OpisRozszerzony,
+    int? Szerokosc = null,
+    int? Wysokosc = null,
+    IReadOnlyList<ObszarNaZdjeciu>? Obszary = null)
+{
+    public static ZdjecieMiejsca Z(Zdjecie z) => new(z.SciezkaPliku, z.TekstAlternatywny, z.CzyDekoracyjne, z.OpisRozszerzony,
+        z.Szerokosc, z.Wysokosc,
+        z.ObszaryAktywne.OrderBy(o => o.Id).Select(o => new ObszarNaZdjeciu(o.KierunekId, o.Ksztalt, o.Wspolrzedne, o.Etykieta)).ToList());
+}
+
+/// <summary>Aktywny obszar zdjęcia (WF-27) — dodatkowy link do kierunku, który jest też na liście kierunków.</summary>
+public sealed record ObszarNaZdjeciu(int KierunekId, string Ksztalt, string Wspolrzedne, string Etykieta);
 
 /// <summary>
 /// Jedna z czterech pozycji listy kierunków. Gdy <see cref="CzyMozliwy"/> = false, pozycja
@@ -52,7 +63,8 @@ public sealed record OpcjaKierunku(
     int? PunktDocelowyId,
     int? SalaDocelowaId,
     decimal? OdlegloscMetry,
-    string? OpisPrzejscia);
+    string? OpisPrzejscia,
+    int? KierunekId = null);
 
 public enum RodzajWynikuPrzejscia
 {

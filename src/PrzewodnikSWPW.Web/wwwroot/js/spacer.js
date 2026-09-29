@@ -40,4 +40,25 @@
       window.przewodnik.oglos(pozycja.textContent.trim(), true);
     }
   });
+
+  // 3. Aktywne obszary zdjęcia (WF-27): współrzędne są w pikselach zdjęcia, a zdjęcie bywa pomniejszone
+  //    (max-width: 100%). Przeliczamy coords do wyświetlanego rozmiaru. Bez JavaScriptu obszary pasują
+  //    tylko do zdjęcia w pełnym rozmiarze — lista kierunków działa zawsze.
+  function przeskalujObszary() {
+    document.querySelectorAll('img[usemap]').forEach(function (obraz) {
+      var szerokosc = parseInt(obraz.getAttribute('width'), 10);
+      var mapa = document.getElementById(obraz.getAttribute('usemap').slice(1));
+      if (!szerokosc || !mapa || !obraz.clientWidth) { return; }
+      var skala = obraz.clientWidth / szerokosc;
+      mapa.querySelectorAll('area[data-wspolrzedne]').forEach(function (obszar) {
+        obszar.coords = obszar.dataset.wspolrzedne.split(',')
+          .map(function (c) { return Math.round(parseInt(c, 10) * skala); })
+          .join(',');
+      });
+    });
+  }
+
+  window.addEventListener('resize', przeskalujObszary);
+  window.addEventListener('load', przeskalujObszary);
+  przeskalujObszary();
 })();

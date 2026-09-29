@@ -12,13 +12,30 @@
 
 <p id="opis-miejsca">@(m.Opis ?? m.OpisGlosowy)</p>
 
-@foreach (var (zdjecie, i) in m.Zdjecia.Select((z, i) => (z, i)))
+@* Zdjęcie po opisie: opis jest czytelny, zanim zdjęcie się doczyta, a width/height rezerwują miejsce,
+   więc tekst niżej nie przeskakuje (P-13, D-10). *@
+@foreach (var (naEkranie, i) in Model.Zdjecia.Select((z, i) => (z, i)))
 {
+    var zdjecie = naEkranie.Zdjecie;
+    var mapa = naEkranie.Obszary.Count > 0 ? $"obszary-zdjecia-{i + 1}" : null;
     <figure>
         <img src="@Zrodlo(zdjecie.SciezkaPliku)"
              alt="@(zdjecie.CzyDekoracyjne ? "" : zdjecie.TekstAlternatywny)"
+             width="@zdjecie.Szerokosc" height="@zdjecie.Wysokosc"
              class="img-fluid"
-             loading="@(i == 0 ? "eager" : "lazy")" />
+             loading="@(i == 0 ? "eager" : "lazy")" decoding="async"
+             usemap="@(mapa is null ? null : $"#{mapa}")" />
+        @if (mapa is not null)
+        {
+            @* Aktywne obszary to dodatek (WF-27): każdy prowadzi tam, gdzie link z listy kierunków niżej,
+               która pozostaje podstawowym sposobem nawigacji. alt = etykieta — bez niej obszar jest niewidoczny dla czytnika. *@
+            <map name="@mapa" id="@mapa">
+                @foreach (var o in naEkranie.Obszary)
+                {
+                    <area shape="@o.Ksztalt" coords="@o.Wspolrzedne" data-wspolrzedne="@o.Wspolrzedne" href="@o.Href" alt="@o.Etykieta" />
+                }
+            </map>
+        }
         @if (!zdjecie.CzyDekoracyjne)
         {
             <figcaption>@(zdjecie.OpisRozszerzony ?? $"Zdjęcie miejsca: {m.Nazwa}.")</figcaption>

@@ -19,6 +19,12 @@ public sealed record MiejsceViewModel(
     WidokMiejsca Miejsce,
     IReadOnlyList<KierunekNaEkranie> Kierunki,
     string? Komunikat,
-    string AdresBudynku);
+    string AdresBudynku,
+    IReadOnlyList<ZdjecieNaEkranie> Zdjecia);
+
+/// <summary>Zdjęcie miejsca z aktywnymi obszarami, które prowadzą tam, gdzie odpowiadające im linki z listy kierunków.</summary>
+public sealed record ZdjecieNaEkranie(ZdjecieMiejsca Zdjecie, IReadOnlyList<ObszarNaEkranie> Obszary);
+
+public sealed record ObszarNaEkranie(string Ksztalt, string Wspolrzedne, string Etykieta, string Href);
 
 public sealed record SalaViewModel(WidokSali Sala, string? AdresPowrotu);

@@ -64,7 +64,7 @@ public sealed class NawigacjaRepozytorium(PrzewodnikDbContext db) : INawigacjaRe
             .AsNoTracking()
             .AsSplitQuery()
             .Include(p => p.Pietro).ThenInclude(p => p.Budynek)
-            .Include(p => p.Zdjecia.OrderBy(z => z.Kolejnosc))
+            .Include(p => p.Zdjecia.OrderBy(z => z.Kolejnosc)).ThenInclude(z => z.ObszaryAktywne)
             .Include(p => p.KierunkiWychodzace).ThenInclude(k => k.Utrudnienia)
             .Include(p => p.KierunkiWychodzace).ThenInclude(k => k.PunktDocelowy!).ThenInclude(p => p.Utrudnienia)
             .Include(p => p.KierunkiWychodzace).ThenInclude(k => k.PunktDocelowy!).ThenInclude(p => p.Pietro).ThenInclude(p => p.Budynek)

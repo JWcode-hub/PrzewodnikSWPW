@@ -114,8 +114,20 @@ public class SpacerController(NawigacjaService nawigacja) : Controller
                     : null))
             .ToList();
 
+        // Aktywny obszar prowadzi tam, gdzie link z listy kierunków — i tylko wtedy, gdy przejście jest możliwe.
+        // Obszar kierunku nieaktywnego albo zablokowanego utrudnieniem nie jest renderowany (lista mówi, dlaczego).
+        var adresyKierunkow = widok.Kierunki.Zip(kierunki)
+            .Where(p => p.First.KierunekId is not null && p.Second.Href is not null)
+            .ToDictionary(p => p.First.KierunekId!.Value, p => p.Second.Href!);
+        var zdjecia = widok.Zdjecia
+            .Select(z => new ZdjecieNaEkranie(z, (z.Obszary ?? [])
+                .Where(o => adresyKierunkow.ContainsKey(o.KierunekId))
+                .Select(o => new ObszarNaEkranie(o.Ksztalt, o.Wspolrzedne, o.Etykieta, adresyKierunkow[o.KierunekId]))
+                .ToList()))
+            .ToList();
+
         return View(new MiejsceViewModel(widok, kierunki, TempData[KluczKomunikatu] as string,
-            Url.Action(nameof(Budynek), new { kodBudynku = widok.Adres.KodBudynku })!));
+            Url.Action(nameof(Budynek), new { kodBudynku = widok.Adres.KodBudynku })!, zdjecia));
     }
 
     private static bool CzyPoprawnyZwrot(int zwrot) => zwrot % 90 == 0;

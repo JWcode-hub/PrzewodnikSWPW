@@ -33,7 +33,7 @@ public sealed class NawigacjaService(INawigacjaRepozytorium repozytorium, TimePr
 
         var zdjecia = punkt.Zdjecia
             .OrderBy(z => z.Kolejnosc)
-            .Select(z => new ZdjecieMiejsca(z.SciezkaPliku, z.TekstAlternatywny, z.CzyDekoracyjne, z.OpisRozszerzony))
+            .Select(ZdjecieMiejsca.Z)
             .ToList();
 
         return new WidokMiejsca(punkt.Id, punkt.Kod, punkt.Nazwa, punkt.Opis, punkt.OpisGlosowy, zwrot, zdjecia, kierunki,
@@ -145,7 +145,7 @@ public sealed class NawigacjaService(INawigacjaRepozytorium repozytorium, TimePr
         return new WidokSali(sala.Id, sala.Symbol, sala.Nazwa, sala.TypSali.Nazwa, sala.Opis, sala.OpisGlosowy,
             sala.Pietro.Budynek.Nazwa, sala.Pietro.Nazwa, sala.LiczbaMiejsc, sala.CzyDostepnaDlaWozkow,
             sala.Zdjecia.OrderBy(z => z.Kolejnosc)
-                .Select(z => new ZdjecieMiejsca(z.SciezkaPliku, z.TekstAlternatywny, z.CzyDekoracyjne, z.OpisRozszerzony))
+                .Select(ZdjecieMiejsca.Z)
                 .ToList(),
             sala.SalaUdogodnienia.Select(su => new UdogodnienieSali(su.Udogodnienie.Nazwa, su.Uwagi)).ToList(),
             powrot, zwrotPowrotu);
@@ -171,7 +171,7 @@ public sealed class NawigacjaService(INawigacjaRepozytorium repozytorium, TimePr
 
         var tekst = $"{Azymuty.Etykieta(wzgledny)} — {NazwaCelu(krawedz)}, {Metry(krawedz.Waga)}";
         return new OpcjaKierunku(wzgledny, true, tekst,
-            krawedz.PunktDocelowyId, krawedz.SalaDocelowaId, krawedz.Waga, krawedz.OpisPrzejscia);
+            krawedz.PunktDocelowyId, krawedz.SalaDocelowaId, krawedz.Waga, krawedz.OpisPrzejscia, krawedz.Id);
     }
 
     /// <summary>
