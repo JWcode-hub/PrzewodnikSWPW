@@ -11,6 +11,7 @@
 <h1 id="naglowek-miejsca" tabindex="-1" data-fokus-po-zaladowaniu>@s.Nazwa</h1>
 
 <p id="opis-miejsca">@(s.Opis ?? s.OpisGlosowy)</p>
+<partial name="_PanelMowy" model="s.OpisGlosowy ?? s.Opis" />
 
 @foreach (var zdjecie in s.Zdjecia)
 {
@@ -59,4 +60,5 @@
 
 @section Scripts {
     <script src="~/js/spacer.js" asp-append-version="true"></script>
+    <script src="~/js/mowa.js" asp-append-version="true"></script>
 }

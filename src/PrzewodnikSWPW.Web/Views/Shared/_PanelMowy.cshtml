@@ -1,0 +1,17 @@
+@model string?
+@inject UstawieniaDostepnosciService UstawieniaDostepnosci
+@* Odczyt opisu mową syntetyczną (WF-35, 06 §4, D-11). Panel istnieje tylko wtedy, gdy użytkownik włączył
+   mowę w /ustawienia — pozostałym nie zaśmieca ekranu. Model to tekst do przeczytania (OpisGlosowy).
+   Atrybut hidden zdejmuje mowa.js: bez JavaScriptu przyciski nic by nie robiły, więc ich nie pokazujemy.
+   „Zatrzymaj czytanie” jest widoczny zawsze, gdy widać „Przeczytaj opis” (WCAG 1.4.2). *@
+@if (UstawieniaDostepnosci.Pobierz().MowaWlaczona && !string.IsNullOrWhiteSpace(Model))
+{
+    <div id="panel-mowy" class="panel-mowy" data-tekst="@Model" hidden>
+        <button type="button" id="btn-czytaj" class="btn btn-primary">Przeczytaj opis</button>
+        <button type="button" id="btn-zatrzymaj" class="btn btn-secondary">Zatrzymaj czytanie</button>
+        <p id="mowa-komunikat" class="komunikat" hidden></p>
+    </div>
+    <noscript>
+        <p>Odczyt opisu głosem wymaga włączonego JavaScriptu. Opis miejsca przeczytasz powyżej.</p>
+    </noscript>
+}

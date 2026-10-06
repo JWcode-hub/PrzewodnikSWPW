@@ -490,6 +490,18 @@ legend {
   display: inline;
 }
 
+/* --- 9d. Odczyt opisu mową (panel widoczny tylko po włączeniu mowy w ustawieniach) --- */
+.panel-mowy {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0 0 1rem;
+}
+.panel-mowy .komunikat {
+  flex-basis: 100%;
+  margin: 0;
+}
+
 /* --- 10. Komunikaty — informacja nigdy wyłącznie kolorem ------------------- */
 .komunikat {
   border: 2px solid currentColor;

@@ -17,7 +17,8 @@
   //    nie renderuje nic „do ogłoszenia”, a podsumowanie błędów nie ma role="alert".
   //
   // 2. ZMIANA BEZ PRZEŁADOWANIA → oglos(). Tylko tu: podpowiedzi wyszukiwania (szukaj.js),
-  //    Alt+P i skrót kierunku bez przejścia (spacer.js), zaznaczenie obszaru myszą (obszary.js).
+  //    Alt+P i skrót kierunku bez przejścia (spacer.js), zaznaczenie obszaru myszą (obszary.js),
+  //    komunikat o braku polskiego głosu (mowa.js).
   //
   // Jedyny obszar aria-live strony to #komunikaty w _Layout.cshtml (06 §3.2).
   function oglos(tekst, pilne) {

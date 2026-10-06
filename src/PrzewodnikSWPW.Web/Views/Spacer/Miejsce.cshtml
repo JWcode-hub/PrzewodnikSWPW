@@ -12,6 +12,7 @@
 <h1 id="naglowek-miejsca" tabindex="-1" @(Model.Komunikat is null ? "data-fokus-po-zaladowaniu" : "")>@m.Nazwa</h1>
 
 <p id="opis-miejsca">@(m.Opis ?? m.OpisGlosowy)</p>
+<partial name="_PanelMowy" model="m.OpisGlosowy ?? m.Opis" />
 
 @* Zdjęcie po opisie: opis jest czytelny, zanim zdjęcie się doczyta, a width/height rezerwują miejsce,
    więc tekst niżej nie przeskakuje (P-13, D-10). *@
@@ -75,4 +76,5 @@
 
 @section Scripts {
     <script src="~/js/spacer.js" asp-append-version="true"></script>
+    <script src="~/js/mowa.js" asp-append-version="true"></script>
 }
