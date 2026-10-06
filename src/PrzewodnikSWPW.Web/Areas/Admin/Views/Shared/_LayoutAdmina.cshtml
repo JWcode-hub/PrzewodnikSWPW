@@ -12,21 +12,32 @@
         ("TypyPunktow", "Typy punktów"),
         ("Udogodnienia", "Udogodnienia"),
     };
+
+    // Wynik operacji w tytule strony — czytnik odczytuje tytuł pierwszy, także bez JavaScriptu.
+    if (ViewData["Komunikat"] is string)
+    {
+        ViewData["Title"] = $"Zapisano – {ViewData["Title"]}";
+    }
 }
 
-<nav aria-label="Menu panelu administratora" class="menu-admina">
-    <ul>
-        @foreach (var (kontroler, tekst) in sekcje)
-        {
-            <li><a asp-area="Admin" asp-controller="@kontroler" asp-action="Index"
-                   aria-current="@(biezacy == kontroler && (kontroler != "Panel" || ViewContext.RouteData.Values["action"] as string == "Index") ? "page" : null)">@tekst</a></li>
-        }
-        <li><a asp-area="Admin" asp-controller="Panel" asp-action="WalidacjaGrafu"
-               aria-current="@(ViewContext.RouteData.Values["action"] as string == "WalidacjaGrafu" ? "page" : null)">Walidacja grafu</a></li>
-        <li><a asp-area="Admin" asp-controller="Panel" asp-action="RejestrZmian"
-               aria-current="@(ViewContext.RouteData.Values["action"] as string == "RejestrZmian" ? "page" : null)">Rejestr zmian</a></li>
-    </ul>
-</nav>
+@* Menu panelu przed <main>: link „Przejdź do treści głównej” omija je razem z nawigacją główną (WCAG 2.4.1). *@
+@section PrzedTrescia {
+    <div class="container">
+        <nav aria-label="Menu panelu administratora" class="menu-admina">
+            <ul>
+                @foreach (var (kontroler, tekst) in sekcje)
+                {
+                    <li><a asp-area="Admin" asp-controller="@kontroler" asp-action="Index"
+                           aria-current="@(biezacy == kontroler && (kontroler != "Panel" || ViewContext.RouteData.Values["action"] as string == "Index") ? "page" : null)">@tekst</a></li>
+                }
+                <li><a asp-area="Admin" asp-controller="Panel" asp-action="WalidacjaGrafu"
+                       aria-current="@(ViewContext.RouteData.Values["action"] as string == "WalidacjaGrafu" ? "page" : null)">Walidacja grafu</a></li>
+                <li><a asp-area="Admin" asp-controller="Panel" asp-action="RejestrZmian"
+                       aria-current="@(ViewContext.RouteData.Values["action"] as string == "RejestrZmian" ? "page" : null)">Rejestr zmian</a></li>
+            </ul>
+        </nav>
+    </div>
+}
 
 @RenderBody()
 

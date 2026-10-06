@@ -1,14 +1,15 @@
 @model MiejsceViewModel
 @{
     var m = Model.Miejsce;
-    // Bez JavaScriptu komunikat o braku przejścia dociera do czytnika w tytule, odczytywanym po przeładowaniu.
+    // Komunikat o braku przejścia niesie tytuł (czytany po przeładowaniu, także bez JavaScriptu)
+    // oraz sam komunikat pod listą kierunków, na który trafia fokus — nie obszar aria-live.
     ViewData["Title"] = Model.Komunikat is null ? m.Nazwa : $"Brak przejścia – {m.Nazwa}";
 
     static string Zrodlo(string sciezka) => sciezka.StartsWith('/') ? sciezka : $"/media/{sciezka}";
 }
 
 @* Kolejność elementów jest stała (UI-02, 06 §2.2): nagłówek → opis → zdjęcie → kierunki. *@
-<h1 id="naglowek-miejsca" tabindex="-1">@m.Nazwa</h1>
+<h1 id="naglowek-miejsca" tabindex="-1" @(Model.Komunikat is null ? "data-fokus-po-zaladowaniu" : "")>@m.Nazwa</h1>
 
 <p id="opis-miejsca">@(m.Opis ?? m.OpisGlosowy)</p>
 
@@ -63,7 +64,8 @@
 
 @if (Model.Komunikat is not null)
 {
-    <p class="komunikat komunikat--blad" data-oglos="@Model.Komunikat" data-oglos-pilne>@Model.Komunikat</p>
+    @* Nie przeszedłeś do nowego miejsca, więc fokus trafia tu, a nie na nazwę miejsca; lista kierunków jest tuż wyżej. *@
+    <p class="komunikat komunikat--blad" tabindex="-1" data-fokus-po-zaladowaniu>@Model.Komunikat</p>
 }
 
 <nav aria-label="Nawigacja pomocnicza spaceru" class="mt-4">

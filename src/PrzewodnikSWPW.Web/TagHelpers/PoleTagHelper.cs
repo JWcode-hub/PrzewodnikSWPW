@@ -77,10 +77,9 @@ public sealed class PoleTagHelper(IHtmlGenerator generator) : TagHelper
         if (blad is not null) atrybuty["aria-invalid"] = "true";
         if (wymagane) atrybuty["aria-required"] = "true";
         if (Autocomplete is not null) atrybuty["autocomplete"] = Autocomplete;
-        if (blad is not null && !ViewContext.HttpContext.Items.ContainsKey(KluczAutofocus))
+        if (blad is not null && ZajmijAutofocus(ViewContext.HttpContext))
         {
             atrybuty["autofocus"] = "autofocus";
-            ViewContext.HttpContext.Items[KluczAutofocus] = true;
         }
 
         var kontrolka = Typ switch
@@ -123,6 +122,12 @@ public sealed class PoleTagHelper(IHtmlGenerator generator) : TagHelper
         if (blad is not null) tresc.AppendHtml($"<p id=\"{idBledu}\" class=\"komunikat-bledu\">").Append($"Błąd: {blad}").AppendHtml("</p>");
         if (!checkbox) tresc.AppendHtml(kontrolka);
     }
+
+    /// <summary>
+    /// Zwraca true dokładnie raz na żądanie — dla pierwszego błędnego pola w kolejności kodu strony.
+    /// Publiczne dla pól, których nie da się wyrazić znacznikiem &lt;pole&gt; (grupa przycisków opcji).
+    /// </summary>
+    public static bool ZajmijAutofocus(HttpContext kontekst) => kontekst.Items.TryAdd(KluczAutofocus, true);
 
     /// <summary>Pole pliku bez atrybutu value — przeglądarka i tak nie przyjmuje wartości początkowej pola pliku.</summary>
     private TagBuilder PolePliku(string nazwa, Dictionary<string, object?> atrybuty)

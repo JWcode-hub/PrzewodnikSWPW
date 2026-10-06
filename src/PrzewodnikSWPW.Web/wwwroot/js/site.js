@@ -6,7 +6,20 @@
   var KLUCZ_USTAWIEN = 'przewodnik.ustawienia';
   var html = document.documentElement;
 
-  // Ogłoszenie dla czytnika ekranu przez jedyny obszar aria-live (06 §3.2).
+  // ZASADA OGŁASZANIA — jedna dla całego serwisu (docs/RAPORT_CZYTNIK.md rozdz. 2):
+  //
+  // 1. PEŁNE PRZEŁADOWANIE strony → obszar aria-live zostaje PUSTY. Wynik akcji niosą:
+  //    - <title>, który czytnik odczytuje pierwszy („Zapisano – …”, „Błąd w formularzu – …”,
+  //      „Brak przejścia – …”, „Znaleziono 3 sale…”) — działa także bez JavaScriptu,
+  //    - element, na który trafia fokus (niżej): nagłówek <h1> nowego miejsca albo wyniku,
+  //      widoczny komunikat o wyniku akcji albo pierwsze błędne pole formularza.
+  //    Ten sam tekst wpisany dodatkowo do aria-live byłby czytany drugi raz, dlatego serwer
+  //    nie renderuje nic „do ogłoszenia”, a podsumowanie błędów nie ma role="alert".
+  //
+  // 2. ZMIANA BEZ PRZEŁADOWANIA → oglos(). Tylko tu: podpowiedzi wyszukiwania (szukaj.js),
+  //    Alt+P i skrót kierunku bez przejścia (spacer.js), zaznaczenie obszaru myszą (obszary.js).
+  //
+  // Jedyny obszar aria-live strony to #komunikaty w _Layout.cshtml (06 §3.2).
   function oglos(tekst, pilne) {
     var el = document.getElementById('komunikaty');
     if (!el) { return; }
@@ -39,16 +52,14 @@
 
   zapiszLokalnie(ustawieniaZDokumentu());
 
-  // Strony, które same nie zarządzają fokusem, oznaczają element docelowy atrybutem (np. nagłówek wyniku trasy).
-  var doFokusu = document.querySelector('[data-fokus-po-zaladowaniu]');
+  // Fokus po załadowaniu — jedyne miejsce, które go ustawia. Widok oznacza cel atrybutem
+  // data-fokus-po-zaladowaniu; gdy oznaczonych jest kilka, wygrywa pierwszy w kodzie strony.
+  // Pierwsze błędne pole ma atrybut autofocus (działa bez JavaScriptu) i ma pierwszeństwo. Ustawiamy
+  // na nim fokus także tutaj: przeglądarka stosuje autofocus dopiero przy rysowaniu strony, więc
+  // w karcie otwartej w tle fokus zostałby na początku dokumentu.
+  var doFokusu = document.querySelector('[autofocus]') || document.querySelector('[data-fokus-po-zaladowaniu]');
   if (doFokusu) {
     doFokusu.focus();
-  }
-
-  // Komunikat wyrenderowany przez serwer (np. „Ustawienia zostały zapisane.”) ogłaszamy po załadowaniu.
-  var doOgloszenia = document.querySelector('[data-oglos]');
-  if (doOgloszenia) {
-    oglos(doOgloszenia.getAttribute('data-oglos'), doOgloszenia.hasAttribute('data-oglos-pilne'));
   }
 
   // Panel ustawień: natychmiastowy podgląd wyglądu. Zapis na serwerze nadal wymaga przycisku.

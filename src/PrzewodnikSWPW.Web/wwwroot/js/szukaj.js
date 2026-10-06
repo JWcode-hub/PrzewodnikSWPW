@@ -6,13 +6,9 @@
 
   var przewodnik = window.przewodnik || { oglos: function () { } };
 
-  // 1. Po wyszukaniu fokus na nagłówku z liczbą wyników (WF-13).
-  var naglowek = document.getElementById('naglowek-wynikow');
-  if (naglowek) {
-    naglowek.focus();
-  }
+  // Fokus na nagłówku z liczbą wyników (WF-13) ustawia site.js (atrybut data-fokus-po-zaladowaniu w widoku).
 
-  // 2. Combobox z podpowiedziami.
+  // Combobox z podpowiedziami.
   var pole = document.getElementById('pole-szukaj');
   if (!pole || !window.fetch) { return; }
 

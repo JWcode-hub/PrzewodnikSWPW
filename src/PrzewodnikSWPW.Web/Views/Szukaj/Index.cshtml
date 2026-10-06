@@ -12,15 +12,17 @@
     static string PierwszaMala(string t) => t.Length == 0 ? t : char.ToLowerInvariant(t[0]) + t[1..];
 }
 
+@* Jeden nagłówek dla obu stanów strony. Po wyszukaniu trafia na niego fokus (WF-13), a liczbę wyników
+   niesie on sam i tytuł strony — bez powtórki w aria-live. Atrybut wstawiany wyrażeniem: Razor nie pomija
+   atrybutów data-* o wartości null. *@
+<h1 id="naglowek-wynikow" tabindex="-1" @(w is null ? "" : "data-fokus-po-zaladowaniu")>@naglowek</h1>
+
 @if (w is null)
 {
-    <h1>Wyszukaj salę</h1>
     <partial name="_FormularzSzukania" model="Model.Fraza" />
 }
 else
 {
-    <h1 id="naglowek-wynikow" tabindex="-1" data-oglos="@naglowek">@naglowek</h1>
-
     @if (liczba > 0)
     {
         <ul class="lista-wynikow">

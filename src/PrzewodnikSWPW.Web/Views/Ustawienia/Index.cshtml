@@ -12,18 +12,27 @@
         ViewData.ModelState.TryGetValue(pole, out var stan) && stan.Errors.Count > 0
             ? stan.Errors[0].ErrorMessage
             : null;
+
+    // Fokus po błędzie: pierwsze błędne pole (autofocus działa bez JavaScriptu). W grupie opcji — jej pierwsza opcja.
+    var autofocusUzyty = false;
+    string? Autofocus(string pole, bool pierwszaOpcja = true)
+    {
+        if (autofocusUzyty || !pierwszaOpcja || Blad(pole) is null) { return null; }
+        autofocusUzyty = true;
+        return "autofocus";
+    }
 }
 
 <h1 id="naglowek-strony" tabindex="-1">Ustawienia dostępności</h1>
 
 @if (komunikat is not null)
 {
-    <p class="komunikat komunikat--sukces" data-oglos="@komunikat">@komunikat</p>
+    <p class="komunikat komunikat--sukces" tabindex="-1" data-fokus-po-zaladowaniu>@komunikat</p>
 }
 
 @if (saBledy)
 {
-    <div class="komunikat komunikat--blad" role="alert">
+    <div class="komunikat komunikat--blad" tabindex="-1" data-fokus-po-zaladowaniu>
         <h2 class="h5">Popraw zaznaczone pola</h2>
         <ul>
             @foreach (var (pole, stan) in ViewData.ModelState)
@@ -50,7 +59,8 @@
         @foreach (var (wartosc, nazwa, opis) in UstawieniaViewModel.Motywy)
         {
             <div class="form-check">
-                <input class="form-check-input" type="radio" asp-for="Motyw" value="@wartosc" id="motyw-@wartosc" />
+                <input class="form-check-input" type="radio" asp-for="Motyw" value="@wartosc" id="motyw-@wartosc"
+                       autofocus="@Autofocus("Motyw", wartosc == UstawieniaViewModel.Motywy[0].Wartosc)" />
                 <label class="form-check-label" for="motyw-@wartosc">@nazwa — @opis</label>
             </div>
         }
@@ -65,7 +75,8 @@
         @foreach (var rozmiar in PrzewodnikSWPW.Web.Services.UstawieniaDostepnosci.DozwoloneRozmiaryTekstu)
         {
             <div class="form-check">
-                <input class="form-check-input" type="radio" asp-for="RozmiarTekstu" value="@rozmiar" id="rozmiar-@rozmiar" />
+                <input class="form-check-input" type="radio" asp-for="RozmiarTekstu" value="@rozmiar" id="rozmiar-@rozmiar"
+                       autofocus="@Autofocus("RozmiarTekstu", rozmiar == PrzewodnikSWPW.Web.Services.UstawieniaDostepnosci.DozwoloneRozmiaryTekstu[0])" />
                 <label class="form-check-label" for="rozmiar-@rozmiar">@rozmiar% @(rozmiar == 100 ? "(domyślny)" : "")</label>
             </div>
         }
@@ -89,7 +100,8 @@
         }
         <select class="form-select" asp-for="TempoMowy" id="pole-TempoMowy"
                 aria-describedby="@(Blad("TempoMowy") is null ? null : "blad-TempoMowy")"
-                aria-invalid="@(Blad("TempoMowy") is null ? null : "true")">
+                aria-invalid="@(Blad("TempoMowy") is null ? null : "true")"
+                autofocus="@Autofocus("TempoMowy")">
             @foreach (var tempo in PrzewodnikSWPW.Web.Services.UstawieniaDostepnosci.DozwoloneTempaMowy)
             {
                 <option value="@tempo">@UstawieniaViewModel.OpisTempa(tempo)</option>

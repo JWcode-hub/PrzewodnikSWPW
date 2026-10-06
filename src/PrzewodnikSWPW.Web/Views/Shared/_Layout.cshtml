@@ -54,6 +54,8 @@
         </div>
     </header>
 
+    @await RenderSectionAsync("PrzedTrescia", required: false)
+
     <main id="tresc" tabindex="-1" class="container py-3">
         @RenderBody()
 

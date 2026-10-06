@@ -95,7 +95,9 @@ public class PanelHttpTesty(AplikacjaFixture app)
         var html = await odpowiedz.Content.ReadAsStringAsync();
 
         Assert.Equal(HttpStatusCode.OK, odpowiedz.StatusCode);
-        Assert.Contains("role=\"alert\"", html);
+        // O błędzie mówi tytuł i pole z fokusem; podsumowanie nie jest drugim obszarem live (zasada ogłaszania, site.js).
+        Assert.Contains("<title>Błąd w formularzu – Nowy budynek – ", html);
+        Assert.DoesNotContain("role=\"alert\"", html);
         // Błąd tekstem „Błąd: …”, powiązany przez aria-describedby, z aria-invalid i autofocus na polu Kod.
         var poleKod = Znacznik(html, "Kod");
         Assert.Contains("aria-describedby=\"Kod-wskazowka Kod-blad\"", poleKod);
@@ -137,6 +139,28 @@ public class PanelHttpTesty(AplikacjaFixture app)
     }
 
     [Fact]
+    public async Task FormularzKierunku_BladGrupyOpcji_FokusNaPierwszejOpcjiGrupy()
+    {
+        var klient = app.Klient();
+        await app.Zaloguj(klient, AplikacjaFixture.EmailAdministratora, app.Haslo);
+        var formularz = await klient.GetStringAsync("/admin/kierunki/nowy?punkt=1&azymut=90");
+
+        // Nieznany RodzajCelu: grupa przycisków opcji jest pierwszym błędnym polem w kolejności kodu strony.
+        var html = await (await klient.PostAsync("/admin/kierunki/nowy", new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            ["__RequestVerificationToken"] = AplikacjaFixture.Token(formularz),
+            ["PunktZrodlowyId"] = "1",
+            ["Azymut"] = "90",
+            ["RodzajCelu"] = "winda",
+            ["RodzajPrzejscia"] = "Korytarz",
+        }))).Content.ReadAsStringAsync();
+
+        Assert.Contains("id=\"RodzajCelu-blad\"", html);
+        Assert.Contains("autofocus=\"autofocus\"", Znacznik(html, "cel-punkt"));
+        Assert.Single(System.Text.RegularExpressions.Regex.Matches(html, "autofocus="));
+    }
+
+    [Fact]
     public async Task Administrator_DodajeBudynek_ZmianaTrafiaDoRejestru()
     {
         var klient = app.Klient();
@@ -154,7 +178,12 @@ public class PanelHttpTesty(AplikacjaFixture app)
 
         Assert.Equal(HttpStatusCode.Redirect, odpowiedz.StatusCode);
         var lista = await klient.GetStringAsync(odpowiedz.Headers.Location!.ToString());
-        Assert.Contains($"Dodano budynek {kod}.", lista);
+        // Wynik operacji: w tytule (bez JavaScriptu) i w komunikacie, na który trafia fokus — nie w aria-live.
+        Assert.Contains("<title>Zapisano – Budynki – ", lista);
+        Assert.Contains($"<p class=\"komunikat komunikat--sukces\" tabindex=\"-1\" data-fokus-po-zaladowaniu>Dodano budynek {kod}.</p>", lista);
+        Assert.DoesNotContain("data-oglos", lista);
+        // Menu panelu stoi przed <main>, więc link „Przejdź do treści głównej” je omija.
+        Assert.True(lista.IndexOf("Menu panelu administratora", StringComparison.Ordinal) < lista.IndexOf("<main", StringComparison.Ordinal));
 
         await using var db = app.Baza.UtworzKontekst();
         var admin = await db.Users.SingleAsync(u => u.Email == AplikacjaFixture.EmailAdministratora);
@@ -186,7 +215,8 @@ public class PanelHttpTesty(AplikacjaFixture app)
         var html = await klient.GetStringAsync("/admin/walidacja-grafu");
 
         Assert.Contains("<h1>Walidacja grafu</h1>", html);
-        Assert.Matches("data-oglos=\"Walidacja zakończona\\. Znaleziono problemów: \\d+\\. Błędy krytyczne: \\d+\\. Ostrzeżenia: \\d+\\.\"", html);
+        Assert.Matches("tabindex=\"-1\" data-fokus-po-zaladowaniu>\\s*<strong>Walidacja zakończona\\. Znaleziono problemów: \\d+\\. Błędy krytyczne: \\d+\\. Ostrzeżenia: \\d+\\.</strong>", html);
+        Assert.DoesNotContain("data-oglos", html);
         Assert.Contains("<th scope=\"col\">Jak naprawić</th>", html);
         // „Popraw” z ukrytym dopowiedzeniem — nazwa linku zrozumiała poza tabelą.
         Assert.Matches("<a href=\"/admin/punkty/\\d+/edytuj\">Popraw<span class=\"visually-hidden\"> punkt A-0-P08</span></a>", html);

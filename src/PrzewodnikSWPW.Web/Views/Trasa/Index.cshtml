@@ -6,15 +6,18 @@
     string? Blad(string pole) =>
         ViewData.ModelState.TryGetValue(pole, out var stan) && stan.Errors.Count > 0 ? stan.Errors[0].ErrorMessage : null;
 
+    // Fokus po błędzie: pierwsze błędne pole (autofocus działa bez JavaScriptu).
+    var autofocusUzyty = false;
+
     var grupy = Model.Sale.GroupBy(s => $"{s.NazwaBudynku}, {s.NazwaPietra.ToLowerInvariant()}");
 }
 
-<h1 id="naglowek-strony" tabindex="-1" data-fokus-po-zaladowaniu="@(saBledy ? "" : null)">Wyznacz trasę</h1>
+<h1 id="naglowek-strony" tabindex="-1">Wyznacz trasę</h1>
 <p>Wybierz salę, z której wychodzisz, i salę, do której chcesz dojść. Przewodnik poda kolejne kroki trasy.</p>
 
 @if (saBledy)
 {
-    <div class="komunikat komunikat--blad" role="alert">
+    <div class="komunikat komunikat--blad" tabindex="-1" data-fokus-po-zaladowaniu>
         <h2 class="h5">Popraw zaznaczone pola</h2>
         <ul>
             @foreach (var (pole, stan) in ViewData.ModelState)
@@ -33,6 +36,8 @@
     {
         var wybrana = pole == "Z" ? Model.Z : Model.Do;
         var blad = Blad(pole);
+        var zFokusem = blad is not null && !autofocusUzyty;
+        autofocusUzyty |= zFokusem;
         <div class="mb-3">
             <label for="pole-@pole" class="form-label">@etykieta</label>
             @if (blad is not null)
@@ -41,7 +46,8 @@
             }
             <select id="pole-@pole" name="@pole" class="form-select"
                     aria-describedby="@(blad is null ? null : $"blad-{pole}")"
-                    aria-invalid="@(blad is null ? null : "true")">
+                    aria-invalid="@(blad is null ? null : "true")"
+                    autofocus="@(zFokusem ? "autofocus" : null)">
                 <option value="">— wybierz salę —</option>
                 @foreach (var grupa in grupy)
                 {

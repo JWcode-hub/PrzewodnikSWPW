@@ -12,8 +12,8 @@
 <p>Sprawdzenie danych nawigacji przed wdrożeniem. Błędy krytyczne sprawiają, że przewodnik poprowadzi źle albo wcale;
    ostrzeżenia wymagają decyzji redaktora.</p>
 
-@* Tekst widoczny bez JavaScriptu; site.js przenosi go do jedynego obszaru aria-live strony (#komunikaty). *@
-<p class="komunikat @(bledy.Count > 0 ? "komunikat--blad" : "komunikat--sukces")" data-oglos="@podsumowanie">
+@* Wynik walidacji: po załadowaniu trafia na niego fokus (site.js), więc czytnik czyta go raz — bez aria-live. *@
+<p class="komunikat @(bledy.Count > 0 ? "komunikat--blad" : "komunikat--sukces")" tabindex="-1" data-fokus-po-zaladowaniu>
     <strong>@podsumowanie</strong>
 </p>
 

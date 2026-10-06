@@ -134,7 +134,9 @@ public class InformacjeHttpTesty(AplikacjaFixture app)
         Assert.Equal(HttpStatusCode.Redirect, odpowiedz.StatusCode);
         Assert.Equal("/zglos-problem/wyslano", odpowiedz.Headers.Location!.OriginalString);
         var potwierdzenie = await klient.GetStringAsync("/zglos-problem/wyslano");
-        Assert.Contains("<h1>Zgłoszenie przyjęte</h1>", potwierdzenie);
+        // Wynik niesie tytuł i nagłówek z fokusem — bez powtórki w aria-live.
+        Assert.Contains("<h1 tabindex=\"-1\" data-fokus-po-zaladowaniu>Zgłoszenie przyjęte</h1>", potwierdzenie);
+        Assert.DoesNotContain("data-oglos", potwierdzenie);
         Assert.Contains("nie zostało zapisane ani wysłane", potwierdzenie); // uczciwie: wersja demonstracyjna
     }
 

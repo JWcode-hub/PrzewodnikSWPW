@@ -23,6 +23,7 @@
           wskazowka="Kierunek względem planu budynku, nie względem osoby." />
 
     @* Dokładnie jeden cel: punkt ruchu ALBO sala (CK_Kierunek_JedenCel). Grupa przycisków opcji — fieldset i legend. *@
+    @{ var fokusNaCelu = bladCelu is not null && PrzewodnikSWPW.Web.TagHelpers.PoleTagHelper.ZajmijAutofocus(Context); }
     <fieldset class="mb-3" id="RodzajCelu" aria-describedby="@(bladCelu is null ? null : "RodzajCelu-blad")">
         <legend class="form-label">Kierunek prowadzi do (wymagane)</legend>
         @if (bladCelu is not null)
@@ -30,7 +31,8 @@
             <p id="RodzajCelu-blad" class="komunikat-bledu">Błąd: @bladCelu</p>
         }
         <div class="form-check pole--wybor">
-            <input class="form-check-input" type="radio" asp-for="RodzajCelu" value="@KierunekFormularz.CelPunkt" id="cel-punkt" />
+            <input class="form-check-input" type="radio" asp-for="RodzajCelu" value="@KierunekFormularz.CelPunkt" id="cel-punkt"
+                   autofocus="@(fokusNaCelu ? "autofocus" : null)" />
             <label class="form-check-label" for="cel-punkt">innego punktu ruchu</label>
         </div>
         <div class="form-check pole--wybor">

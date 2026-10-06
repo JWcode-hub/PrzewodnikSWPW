@@ -2,13 +2,9 @@
 (function () {
   'use strict';
 
-  // 1. Po załadowaniu fokus na nazwie miejsca — czytnik zaczyna od nowego miejsca (06 §3.1).
-  var naglowek = document.getElementById('naglowek-miejsca');
-  if (naglowek) {
-    naglowek.focus();
-  }
+  // Fokus na nazwie miejsca po załadowaniu ustawia site.js (atrybut data-fokus-po-zaladowaniu w widoku).
 
-  // 2. Skróty kierunków — decyzja D-02: zawsze z Alt, nigdy gołe litery ani strzałki (P-08);
+  // 1. Skróty kierunków — decyzja D-02: zawsze z Alt, nigdy gołe litery ani strzałki (P-08);
   //    kolejność cyfr jak na liście (D-01). Alt+S i Alt+T celowo nieprzypisane (kolizja z Firefoksem).
   var SKROTY = {
     Digit1: 'prosto', Numpad1: 'prosto',
@@ -51,7 +47,7 @@
     }
   });
 
-  // 3. Aktywne obszary zdjęcia (WF-27): współrzędne są w pikselach zdjęcia, a zdjęcie bywa pomniejszone
+  // 2. Aktywne obszary zdjęcia (WF-27): współrzędne są w pikselach zdjęcia, a zdjęcie bywa pomniejszone
   //    (max-width: 100%). Przeliczamy coords do wyświetlanego rozmiaru. Bez JavaScriptu obszary pasują
   //    tylko do zdjęcia w pełnym rozmiarze — lista kierunków działa zawsze.
   function przeskalujObszary() {
