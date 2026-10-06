@@ -129,14 +129,9 @@ public class TypySalController(AdministracjaService admin) : SlownikController<T
     protected override int MaksDlugoscOpisu => 200;
 }
 
-[Route("admin/typy-punktow")]
-public class TypyPunktowController(AdministracjaService admin) : SlownikController<TypPunktu>(admin)
-{
-    protected override string Tytul => "Typy punktów ruchu";
-    protected override string NazwaPozycji => "typ punktu";
-    protected override int MaksDlugoscNazwy => 50;
-    protected override int MaksDlugoscOpisu => 200;
-}
+// Typy punktów ruchu nie mają strony w panelu: pięć typów z migracji (hol, korytarz, skrzyżowanie,
+// podest schodów, przed windą) wystarcza, a typ nie wpływa na spacer ani trasę. Redaktor wybiera go
+// w formularzu punktu ruchu; nowy typ dodaje się migracją (HasData w PrzewodnikDbContext).
 
 [Route("admin/udogodnienia")]
 public class UdogodnieniaController(AdministracjaService admin) : SlownikController<Udogodnienie>(admin)

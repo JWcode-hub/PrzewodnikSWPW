@@ -111,7 +111,9 @@ public class SpacerController(NawigacjaService nawigacja) : Controller
                 k.Tekst,
                 k.CzyMozliwy
                     ? Url.Action(nameof(Idz), new { zPunktu = widok.PunktId, kierunek = ParametrKierunku[k.Kierunek], zwrot = widok.Zwrot })
-                    : null))
+                    : null,
+                k.Nazwa,
+                k.Szczegol))
             .ToList();
 
         // Aktywny obszar prowadzi tam, gdzie link z listy kierunków — i tylko wtedy, gdy przejście jest możliwe.

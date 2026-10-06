@@ -58,6 +58,9 @@ public sealed record ObszarNaZdjeciu(int KierunekId, string Ksztalt, string Wspo
 /// Jedna z czterech pozycji listy kierunków. Gdy <see cref="CzyMozliwy"/> = false, pozycja
 /// jest renderowana jako zwykły tekst z opisem przeszkody, nie jako link.
 /// </summary>
+/// <param name="Tekst">Pełna etykieta w jednym zdaniu — dla ogłoszeń i testów.</param>
+/// <param name="Nazwa">Pierwszy wiersz na ekranie: czynność i cel („Idź prosto — hol główny”) albo „W lewo — brak przejścia.”</param>
+/// <param name="Szczegol">Drugi wiersz: rodzaj przejścia, odległość i opis z bazy; dla braku przejścia — opis przeszkody.</param>
 public sealed record OpcjaKierunku(
     KierunekWzgledny Kierunek,
     bool CzyMozliwy,
@@ -66,7 +69,9 @@ public sealed record OpcjaKierunku(
     int? SalaDocelowaId,
     decimal? OdlegloscMetry,
     string? OpisPrzejscia,
-    int? KierunekId = null);
+    int? KierunekId = null,
+    string Nazwa = "",
+    string? Szczegol = null);
 
 public enum RodzajWynikuPrzejscia
 {

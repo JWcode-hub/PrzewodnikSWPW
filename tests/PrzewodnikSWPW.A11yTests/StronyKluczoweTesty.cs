@@ -105,9 +105,12 @@ public class StronyKluczoweTesty(AplikacjaFixture app)
         var naUstawieniach = await Strony.PowazneNaruszeniaAxe(strona);
         await strona.GotoAsync(Strony.Miejsce);
         var naMiejscu = await Strony.PowazneNaruszeniaAxe(strona);
+        await strona.GotoAsync(await Strony.AdresTrasy(app));
+        var naTrasie = await Strony.PowazneNaruszeniaAxe(strona);
 
         Assert.True(naUstawieniach.Count == 0, $"ustawienia, motyw {motyw}:\n{string.Join("\n", naUstawieniach)}");
         Assert.True(naMiejscu.Count == 0, $"ekran miejsca, motyw {motyw}:\n{string.Join("\n", naMiejscu)}");
+        Assert.True(naTrasie.Count == 0, $"oś trasy, motyw {motyw}:\n{string.Join("\n", naTrasie)}");
     }
 
     /// <summary>Panel mowy pojawia się dopiero po włączeniu w ustawieniach — sprawdzamy także ten stan strony.</summary>
@@ -125,5 +128,72 @@ public class StronyKluczoweTesty(AplikacjaFixture app)
         Assert.True(await strona.GetByRole(AriaRole.Button, new() { Name = "Zatrzymaj czytanie" }).IsVisibleAsync());
         var naruszenia = await Strony.PowazneNaruszeniaAxe(strona);
         Assert.True(naruszenia.Count == 0, string.Join("\n", naruszenia));
+
+        // Oś trasy: przycisk przy każdym kroku i jeden przycisk zatrzymania, wszystkie widoczne po uruchomieniu skryptu.
+        await strona.GotoAsync(await Strony.AdresTrasy(app));
+        var kroki = await strona.Locator("ol.trasa > li").CountAsync();
+        var przyciski = strona.Locator("ol.trasa button[data-czytaj]:visible");
+        Assert.Equal(kroki, await przyciski.CountAsync());
+        // Nazwa przycisku w drzewie dostępności niesie nazwę punktu — pięć przycisków „Przeczytaj ten krok” byłoby nierozróżnialnych.
+        var drzewo = await strona.Locator("ol.trasa > li").First.AriaSnapshotAsync();
+        Assert.Matches("button \"Przeczytaj ten krok ?: \\S", drzewo);
+        Assert.True(await strona.GetByRole(AriaRole.Button, new() { Name = "Zatrzymaj czytanie" }).IsVisibleAsync());
+        naruszenia = await Strony.PowazneNaruszeniaAxe(strona);
+        Assert.True(naruszenia.Count == 0, string.Join("\n", naruszenia));
+    }
+
+    /// <summary>Dwie kolumny układa CSS: na szerokim ekranie przejścia stoją obok opisu, na wąskim pod nim — bez przewijania w poziomie.</summary>
+    [Theory]
+    [InlineData(1280, true)]
+    [InlineData(360, false)]
+    public async Task EkranMiejsca_UkladDwukolumnowyNaSzerokimEkranie_JednaKolumnaNaWaskim(int szerokosc, bool dwieKolumny)
+    {
+        var strona = await app.NowaStrona();
+        await strona.SetViewportSizeAsync(szerokosc, 800);
+        await strona.GotoAsync(Strony.Miejsce);
+
+        var opis = await strona.Locator("#opis-miejsca").BoundingBoxAsync();
+        var lista = await strona.Locator(".lista-kierunkow").BoundingBoxAsync();
+        Assert.NotNull(opis);
+        Assert.NotNull(lista);
+
+        Assert.Equal(dwieKolumny, lista.X >= opis.X + opis.Width);   // obok opisu…
+        Assert.Equal(!dwieKolumny, lista.Y >= opis.Y + opis.Height); // …albo pod nim
+        // Reflow (WCAG 1.4.10): żadnego przewijania poziomego, także na 360 px.
+        Assert.True(await strona.EvaluateAsync<bool>("() => document.documentElement.scrollWidth <= document.documentElement.clientWidth"));
+        // Oba wiersze każdego przejścia są widoczne.
+        Assert.True(await strona.Locator(".lista-kierunkow a .kierunek__nazwa").First.IsVisibleAsync());
+        Assert.True(await strona.Locator(".lista-kierunkow a .kierunek__szczegol").First.IsVisibleAsync());
+    }
+
+    /// <summary>D-14: ramkę „Brak zdjęcia” widać na ekranie, ale nie ma jej w drzewie dostępności.</summary>
+    [Fact]
+    public async Task EkranMiejscaBezZdjecia_RamkaBrakZdjecia_WidocznaNaSrodku_ANiewidocznaDlaCzytnika()
+    {
+        var strona = await app.NowaStrona();
+        await strona.GotoAsync(Strony.Miejsce);
+        var ramka = strona.Locator(".brak-zdjecia");
+
+        Assert.True(await ramka.IsVisibleAsync());
+        Assert.Equal("Brak zdjęcia", (await ramka.InnerTextAsync()).Trim());
+        // Napis stoi na środku ramki — w poziomie i w pionie (z tolerancją 2 px).
+        var srodek = await ramka.EvaluateAsync<double[]>(
+            """
+            e => {
+              const zakres = document.createRange(); zakres.selectNodeContents(e);
+              const t = zakres.getBoundingClientRect(), r = e.getBoundingClientRect();
+              return [(t.left + t.right) / 2 - (r.left + r.right) / 2, (t.top + t.bottom) / 2 - (r.top + r.bottom) / 2, r.width, r.height];
+            }
+            """);
+        Assert.InRange(srodek[0], -2, 2);
+        Assert.InRange(srodek[1], -2, 2);
+        Assert.True(srodek[2] > srodek[3], "Ramka ma proporcje poziomego zdjęcia.");
+
+        // Czytnik ekranu dostaje drzewo dostępności — a w nim ramki nie ma.
+        var drzewo = await strona.Locator("main").AriaSnapshotAsync();
+        Assert.DoesNotContain("Brak zdjęcia", drzewo);
+        Assert.Contains("Opis miejsca", drzewo);
+        // Tab jej nie odwiedza: nie zawiera niczego, na co mógłby trafić fokus.
+        Assert.Equal(0, await ramka.Locator("a, button, input, select, textarea, [tabindex]").CountAsync());
     }
 }

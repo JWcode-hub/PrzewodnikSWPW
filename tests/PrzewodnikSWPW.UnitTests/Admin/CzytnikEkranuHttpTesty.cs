@@ -172,7 +172,7 @@ public partial class CzytnikEkranuHttpTesty(AplikacjaFixture app)
         Assert.StartsWith("/trasa/wynik", adresTrasy);
         SprawdzStrukture(trasa, adresTrasy);
         Assert.Matches("<h1 id=\"naglowek-trasy\" tabindex=\"-1\" data-fokus-po-zaladowaniu(=\"\")?>Trasa z sali \\S+ do sali A15</h1>", trasa);
-        Assert.Matches("<ol class=\"lista-krokow\">\\s*<li>", trasa);
+        Assert.Matches("<ol class=\"trasa\">\\s*<li>", trasa);
 
         // 5. Zmiana motywu w ustawieniach: POST → przekierowanie → motyw w <html>, wynik w tytule i w komunikacie z fokusem.
         var (_, ustawienia) = await Otworz(klient, "/ustawienia");

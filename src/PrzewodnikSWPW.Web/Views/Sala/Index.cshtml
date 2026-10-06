@@ -50,7 +50,7 @@
 
 @if (Model.AdresPowrotu is not null && s.Powrot is { } powrot)
 {
-    <h2>Dokąd chcesz pójść?</h2>
+    <h2>Dostępne przejścia</h2>
     <ul class="lista-kierunkow">
         <li data-kierunek="tyl">
             <a href="@Model.AdresPowrotu" class="kierunek">Wyjdź z sali — @MalaLitera(powrot.Nazwa)</a>

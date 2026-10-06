@@ -1,4 +1,4 @@
-// Odczyt opisu miejsca mową syntetyczną (WF-35, 06 §4, decyzja D-11) — wyłącznie usprawnienie.
+// Odczyt opisu miejsca i kroków trasy mową syntetyczną (WF-35, 06 §4, decyzja D-11) — wyłącznie usprawnienie.
 // Dla osób, które NIE korzystają z czytnika ekranu. Opis jest zawsze na stronie jako tekst.
 //
 // Czego ten plik nie robi, i tak ma zostać (ryzyko P-05 — dwa głosy naraz):
@@ -13,8 +13,9 @@
 
   var html = document.documentElement;
   var syntezator = window.speechSynthesis;
-  var przyciskCzytaj = document.getElementById('btn-czytaj');
-  var przyciskZatrzymaj = document.getElementById('btn-zatrzymaj');
+  var przyciskCzytaj = document.getElementById('btn-czytaj');       // ekran miejsca i karta sali
+  var przyciskZatrzymaj = document.getElementById('btn-zatrzymaj'); // zawsze, gdy jest co czytać
+  var przyciskiKrokow = document.querySelectorAll('[data-czytaj]'); // „Przeczytaj ten krok” na osi trasy
   var komunikat = document.getElementById('mowa-komunikat');
 
   // Komunikat tekstowy pod przyciskami — nigdy cisza zamiast wyjaśnienia. Zmiana bez przeładowania
@@ -30,9 +31,10 @@
   panel.hidden = false;
 
   if (!syntezator || !window.SpeechSynthesisUtterance) {
-    przyciskCzytaj.hidden = true;
+    // Przyciski kroków mają atrybut hidden z serwera i tu go nie tracą.
+    if (przyciskCzytaj) { przyciskCzytaj.hidden = true; }
     przyciskZatrzymaj.hidden = true;
-    powiadom('Twoja przeglądarka nie obsługuje mowy syntetycznej. Opis miejsca przeczytasz na stronie.');
+    powiadom('Twoja przeglądarka nie obsługuje mowy syntetycznej. Opis przeczytasz na stronie.');
     return;
   }
 
@@ -86,22 +88,25 @@
     syntezator.cancel();
   }
 
-  // Wywoływane tylko z gestu użytkownika: przycisk „Przeczytaj opis” albo Alt+P (spacer.js).
-  function czytaj() {
+  // Wywoływane tylko z gestu użytkownika: przycisk „Przeczytaj opis”, „Przeczytaj ten krok” albo Alt+P (spacer.js).
+  // Bez argumentu czyta opis miejsca z panelu (OpisGlosowy).
+  function czytaj(tekst) {
     if (html.dataset.mowa !== 'wlaczona') { return; }
+    var doPrzeczytania = typeof tekst === 'string' && tekst ? tekst : panel.dataset.tekst;
+    if (!doPrzeczytania) { return; }
     syntezator.cancel(); // każda nowa wypowiedź przerywa poprzednią
 
     gdyGlosyGotowe(function () {
       var glos = glosPolski();
       if (!glos) {
         // Bez polskiego głosu przeglądarka czytałaby polski tekst obcym głosem — wolimy komunikat.
-        powiadom('Twoja przeglądarka nie ma zainstalowanego polskiego głosu. Opis miejsca przeczytasz na stronie.');
+        powiadom('Twoja przeglądarka nie ma zainstalowanego polskiego głosu. Opis przeczytasz na stronie.');
         return;
       }
 
       powiadom('');
       syntezator.cancel();
-      var wypowiedz = new SpeechSynthesisUtterance(panel.dataset.tekst);
+      var wypowiedz = new SpeechSynthesisUtterance(doPrzeczytania);
       wypowiedz.lang = 'pl-PL';
       wypowiedz.voice = glos;
       wypowiedz.rate = tempo();
@@ -110,8 +115,14 @@
     });
   }
 
-  przyciskCzytaj.addEventListener('click', czytaj);
+  if (przyciskCzytaj) {
+    przyciskCzytaj.addEventListener('click', function () { czytaj(); });
+  }
   przyciskZatrzymaj.addEventListener('click', zatrzymaj);
+  przyciskiKrokow.forEach(function (przycisk) {
+    przycisk.hidden = false;
+    przycisk.addEventListener('click', function () { czytaj(przycisk.dataset.czytaj); });
+  });
 
   // Głos nie może mówić dalej o miejscu, z którego użytkownik właśnie wyszedł.
   window.addEventListener('pagehide', zatrzymaj);
