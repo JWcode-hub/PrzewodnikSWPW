@@ -269,6 +269,25 @@ public partial class CzytnikEkranuHttpTesty(AplikacjaFixture app)
         Assert.Single(Regex.Matches(html, "data-fokus-po-zaladowaniu"));
     }
 
+    [Fact]
+    public async Task NawigacjaGlowna_Niezalogowany_MaLinkDoLogowania_ZalogowanyAdministrator_LinkDoPanelu()
+    {
+        var klient = app.Klient();
+        var naglowek = Regex.Match(await klient.GetStringAsync("/"), "<header.*?</header>", RegexOptions.Singleline).Value;
+        Assert.Contains("<li class=\"nawigacja-konto\"><a href=\"/admin\">Zaloguj się do panelu administratora</a></li>", naglowek);
+
+        // Link prowadzi przez stronę logowania i wraca do panelu.
+        var odpowiedz = await klient.GetAsync("/admin");
+        Assert.Equal(HttpStatusCode.Redirect, odpowiedz.StatusCode);
+        Assert.Contains("/konto/logowanie?ReturnUrl=%2Fadmin", odpowiedz.Headers.Location!.OriginalString);
+
+        await app.Zaloguj(klient, AplikacjaFixture.EmailAdministratora, app.Haslo);
+        naglowek = Regex.Match(await klient.GetStringAsync("/"), "<header.*?</header>", RegexOptions.Singleline).Value;
+        Assert.Contains("<li class=\"nawigacja-konto\"><a href=\"/admin\">Panel administratora</a></li>", naglowek);
+        Assert.DoesNotContain("Zaloguj się do panelu", naglowek);
+        Assert.Single(Regex.Matches(naglowek, "nawigacja-konto"));
+    }
+
     [GeneratedRegex("<h([1-6])[\\s>]")]
     private static partial Regex NaglowekRegex();
 

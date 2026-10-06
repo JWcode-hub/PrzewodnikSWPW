@@ -270,6 +270,11 @@ a:hover {
   max-width: 100%;
 }
 
+/* Logowanie, panel i wylogowanie przy prawej krawędzi; po zawinięciu listy — od lewej, jak reszta. */
+.nawigacja-konto {
+  margin-left: auto;
+}
+
 .nazwa-serwisu {
   font-weight: 700;
   font-size: 1.25rem;
