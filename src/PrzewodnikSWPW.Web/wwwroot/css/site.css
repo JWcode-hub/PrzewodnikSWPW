@@ -598,7 +598,11 @@ legend {
 .formularz-admina {
   max-width: 45rem;
 }
+/* Wskazówka pod etykietą pola: mniejsza od etykiety, żeby było widać, co jest nazwą pola, a co objaśnieniem.
+   0,9rem to ok. 16 px przy domyślnym rozmiarze — nie mniej niż zwykły tekst przeglądarki; kolor bez zmian,
+   więc kontrast zostaje ten sam. Rozmiar w rem rośnie z ustawieniem „Rozmiar tekstu”. */
 .wskazowka {
+  font-size: 0.9rem;
   margin-bottom: 0.5rem;
 }
 .pole--wybor .form-check {
