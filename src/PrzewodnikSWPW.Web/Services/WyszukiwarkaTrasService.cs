@@ -27,6 +27,7 @@ public sealed record Trasa(
     int CzasSekundy,
     bool CzyZawieraSchody)
 {
+    /// <summary>Liczba wierszy osi trasy: punkt startowy i po jednym na każdy odcinek.</summary>
     public int LiczbaKrokow => Instrukcje.Count;
 }
 
@@ -233,7 +234,7 @@ public sealed class WyszukiwarkaTrasService(
             : null;
 
         var krawedzie = drzwiDoCelu is not null ? [.. sciezka, drzwiDoCelu] : sciezka;
-        var instrukcje = generator.Opisz(graf, krawedzie, zwrot, wstep);
+        var instrukcje = generator.Opisz(graf, krawedzie, zwrot, wstep, start);
         var dlugosc = krawedzie.Sum(k => k.Waga);
 
         return new Trasa(instrukcje, dlugosc, (int)Math.Ceiling(dlugosc / TempoMetrowNaSekunde), krawedzie.Any(k => k.CzySchody));
