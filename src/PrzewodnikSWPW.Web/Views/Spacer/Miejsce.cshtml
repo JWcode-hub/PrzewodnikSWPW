@@ -14,8 +14,15 @@
 
 <div class="uklad-miejsca">
     <div>
-        @* Punkt bez zdjęcia nie ma <figure> w ogóle — bez ramki zastępczej. width/height rezerwują miejsce,
-           więc tekst niżej nie przeskakuje, gdy zdjęcie się doczyta (P-13, D-10). *@
+        @* Punkt bez zdjęcia: ramka z napisem „Brak zdjęcia” wyłącznie dla wzroku (D-14). To nie <figure> ani <img>,
+           a aria-hidden usuwa ją z drzewa dostępności — czytnik ekranu nie powtarza „brak zdjęcia” przy każdym kroku.
+           Własna mowa przewodnika czyta tylko OpisGlosowy, więc też jej nie odczyta. *@
+        @if (Model.Zdjecia.Count == 0)
+        {
+            <div class="brak-zdjecia" aria-hidden="true">Brak zdjęcia</div>
+        }
+
+        @* width/height rezerwują miejsce, więc tekst niżej nie przeskakuje, gdy zdjęcie się doczyta (P-13, D-10). *@
         @foreach (var (naEkranie, i) in Model.Zdjecia.Select((z, i) => (z, i)))
         {
             var zdjecie = naEkranie.Zdjecie;

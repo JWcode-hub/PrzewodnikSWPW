@@ -40,6 +40,7 @@ public class SpacerZdjeciaHttpTesty(AplikacjaFixture app)
             var html = await odpowiedz.Content.ReadAsStringAsync();
 
             // Kolejność w kodzie: nagłówek → zdjęcie → opis → lista przejść (UI-02, D-13).
+            Assert.DoesNotContain("brak-zdjecia", html); // ramka zastępcza tylko wtedy, gdy zdjęcia nie ma
             var naglowek = html.IndexOf("id=\"naglowek-miejsca\"");
             var figura = html.IndexOf("<figure>");
             var opis = html.IndexOf("id=\"opis-miejsca\"");

@@ -402,6 +402,22 @@ legend {
   border: 2px solid var(--kolor-obramowanie);
   border-radius: 4px;
 }
+/* Ramka zastępcza, gdy punkt nie ma zdjęcia (D-14): napis na środku, proporcje typowego zdjęcia.
+   aspect-ratio to rozmiar preferowany, nie stała wysokość — przy dużym tekście ramka rośnie. */
+.brak-zdjecia {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 16 / 9;
+  margin: 0 0 1.5rem;
+  padding: 1rem;
+  border: 2px dashed var(--kolor-obramowanie);
+  border-radius: 4px;
+  background-color: var(--kolor-tlo-pomocnicze);
+  color: var(--kolor-tekst);
+  font-size: 1.25rem;
+  text-align: center;
+}
 .uklad-miejsca figcaption {
   font-size: 0.95rem;
   margin-top: 0.5rem;

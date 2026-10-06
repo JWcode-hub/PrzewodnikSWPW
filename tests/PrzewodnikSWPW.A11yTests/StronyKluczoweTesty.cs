@@ -165,4 +165,35 @@ public class StronyKluczoweTesty(AplikacjaFixture app)
         Assert.True(await strona.Locator(".lista-kierunkow a .kierunek__nazwa").First.IsVisibleAsync());
         Assert.True(await strona.Locator(".lista-kierunkow a .kierunek__szczegol").First.IsVisibleAsync());
     }
+
+    /// <summary>D-14: ramkę „Brak zdjęcia” widać na ekranie, ale nie ma jej w drzewie dostępności.</summary>
+    [Fact]
+    public async Task EkranMiejscaBezZdjecia_RamkaBrakZdjecia_WidocznaNaSrodku_ANiewidocznaDlaCzytnika()
+    {
+        var strona = await app.NowaStrona();
+        await strona.GotoAsync(Strony.Miejsce);
+        var ramka = strona.Locator(".brak-zdjecia");
+
+        Assert.True(await ramka.IsVisibleAsync());
+        Assert.Equal("Brak zdjęcia", (await ramka.InnerTextAsync()).Trim());
+        // Napis stoi na środku ramki — w poziomie i w pionie (z tolerancją 2 px).
+        var srodek = await ramka.EvaluateAsync<double[]>(
+            """
+            e => {
+              const zakres = document.createRange(); zakres.selectNodeContents(e);
+              const t = zakres.getBoundingClientRect(), r = e.getBoundingClientRect();
+              return [(t.left + t.right) / 2 - (r.left + r.right) / 2, (t.top + t.bottom) / 2 - (r.top + r.bottom) / 2, r.width, r.height];
+            }
+            """);
+        Assert.InRange(srodek[0], -2, 2);
+        Assert.InRange(srodek[1], -2, 2);
+        Assert.True(srodek[2] > srodek[3], "Ramka ma proporcje poziomego zdjęcia.");
+
+        // Czytnik ekranu dostaje drzewo dostępności — a w nim ramki nie ma.
+        var drzewo = await strona.Locator("main").AriaSnapshotAsync();
+        Assert.DoesNotContain("Brak zdjęcia", drzewo);
+        Assert.Contains("Opis miejsca", drzewo);
+        // Tab jej nie odwiedza: nie zawiera niczego, na co mógłby trafić fokus.
+        Assert.Equal(0, await ramka.Locator("a, button, input, select, textarea, [tabindex]").CountAsync());
+    }
 }

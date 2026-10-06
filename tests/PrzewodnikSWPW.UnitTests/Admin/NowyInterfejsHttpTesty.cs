@@ -61,7 +61,7 @@ public class NowyInterfejsHttpTesty(AplikacjaFixture app)
     }
 
     [Fact]
-    public async Task EkranMiejsca_BezZdjecia_NieMaFigure_ANaglowkiSaWStalejKolejnosci()
+    public async Task EkranMiejsca_BezZdjecia_RamkaZastepczaUkrytaPrzedCzytnikiem_ANaglowkiSaWStalejKolejnosci()
     {
         await using var db = app.Baza.UtworzKontekst();
         var bezZdjec = await db.PunktyRuchu.Include(p => p.Pietro).ThenInclude(p => p.Budynek)
@@ -72,8 +72,12 @@ public class NowyInterfejsHttpTesty(AplikacjaFixture app)
             $"/spacer/{bezZdjec.Pietro.Budynek.Kod}/{bezZdjec.Pietro.Numer}/{bezZdjec.Kod.Split('-')[^1]}?zwrot={bezZdjec.AzymutDomyslny}");
         var tresc = Regex.Match(html, "<main\\b.*?</main>", RegexOptions.Singleline).Value;
 
+        // Ramka „Brak zdjęcia” jest tylko dla wzroku: nie jest figurą ani obrazem i nie ma jej w drzewie dostępności (D-14).
         Assert.DoesNotContain("<figure", tresc);
         Assert.DoesNotContain("<img", tresc);
+        Assert.Contains("<div class=\"brak-zdjecia\" aria-hidden=\"true\">Brak zdjęcia</div>", tresc);
+        Assert.True(tresc.IndexOf("id=\"naglowek-miejsca\"", StringComparison.Ordinal) < tresc.IndexOf("brak-zdjecia", StringComparison.Ordinal));
+        Assert.True(tresc.IndexOf("brak-zdjecia", StringComparison.Ordinal) < tresc.IndexOf("id=\"opis-miejsca\"", StringComparison.Ordinal));
         Assert.Equal(
             ["h1", "h2 Opis miejsca", "h2 Dostępne przejścia"],
             Regex.Matches(tresc, "<(h[1-6])[^>]*>(.*?)</h[1-6]>", RegexOptions.Singleline)
