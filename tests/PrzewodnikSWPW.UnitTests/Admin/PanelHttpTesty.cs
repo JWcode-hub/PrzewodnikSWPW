@@ -139,6 +139,25 @@ public class PanelHttpTesty(AplikacjaFixture app)
     }
 
     [Fact]
+    public async Task TypyPunktow_BezStronyWPanelu_AlePoleWFormularzuPunktuZostaje()
+    {
+        var klient = app.Klient();
+        await app.Zaloguj(klient, AplikacjaFixture.EmailAdministratora, app.Haslo);
+
+        var panel = await klient.GetStringAsync("/admin");
+        Assert.DoesNotContain("Typy punktów", panel);
+        Assert.Contains(">Typy sal</a>", panel);
+        Assert.Equal(HttpStatusCode.NotFound, (await klient.GetAsync("/admin/typy-punktow")).StatusCode);
+
+        // Typ punktu nadal wybiera się przy punkcie ruchu — z pięciu typów z migracji.
+        var formularz = await klient.GetStringAsync("/admin/punkty/nowy");
+        var lista = System.Text.RegularExpressions.Regex.Match(formularz, "<select[^>]*id=\"TypPunktuId\".*?</select>",
+            System.Text.RegularExpressions.RegexOptions.Singleline).Value;
+        Assert.Contains(">Korytarz</option>", lista);
+        Assert.Contains(">Przed windą</option>", lista);
+    }
+
+    [Fact]
     public async Task FormularzKierunku_BladGrupyOpcji_FokusNaPierwszejOpcjiGrupy()
     {
         var klient = app.Klient();
