@@ -1,0 +1,64 @@
+@model SalaViewModel
+@{
+    var s = Model.Sala;
+    ViewData["Title"] = s.Nazwa;
+
+    static string Zrodlo(string sciezka) => sciezka.StartsWith('/') ? sciezka : $"/media/{sciezka}";
+    // Tylko pierwsza litera — „Korytarz przy sali A12” → „korytarz przy sali A12”, a nie „…a12”.
+    static string MalaLitera(string tekst) => tekst.Length == 0 ? tekst : char.ToLowerInvariant(tekst[0]) + tekst[1..];
+}
+
+<h1 id="naglowek-miejsca" tabindex="-1" data-fokus-po-zaladowaniu>@s.Nazwa</h1>
+
+<p id="opis-miejsca">@(s.Opis ?? s.OpisGlosowy)</p>
+<partial name="_PanelMowy" model="s.OpisGlosowy ?? s.Opis" />
+
+@foreach (var zdjecie in s.Zdjecia)
+{
+    <figure>
+        <img src="@Zrodlo(zdjecie.SciezkaPliku)" alt="@(zdjecie.CzyDekoracyjne ? "" : zdjecie.TekstAlternatywny)"
+             width="@zdjecie.Szerokosc" height="@zdjecie.Wysokosc" class="img-fluid" loading="lazy" decoding="async" />
+        @if (!zdjecie.CzyDekoracyjne)
+        {
+            <figcaption>@(zdjecie.OpisRozszerzony ?? $"Zdjęcie: {s.Nazwa}.")</figcaption>
+        }
+    </figure>
+}
+
+<h2>Informacje o sali</h2>
+<ul>
+    <li>Oznaczenie na drzwiach: @s.Symbol</li>
+    <li>Rodzaj: @MalaLitera(s.TypSali)</li>
+    <li>Położenie: @s.NazwaBudynku, @MalaLitera(s.NazwaPietra)</li>
+    @if (s.LiczbaMiejsc is int miejsca)
+    {
+        <li>Liczba miejsc: @miejsca</li>
+    }
+    <li>@(s.CzyDostepnaDlaWozkow ? "Sala dostępna dla osób na wózkach." : "Sala niedostępna dla osób na wózkach.")</li>
+</ul>
+
+@if (s.Udogodnienia.Count > 0)
+{
+    <h2>Udogodnienia</h2>
+    <ul>
+        @foreach (var u in s.Udogodnienia)
+        {
+            <li>@u.Nazwa@(u.Uwagi is null ? "" : $" — {u.Uwagi}")</li>
+        }
+    </ul>
+}
+
+@if (Model.AdresPowrotu is not null && s.Powrot is { } powrot)
+{
+    <h2>Dokąd chcesz pójść?</h2>
+    <ul class="lista-kierunkow">
+        <li data-kierunek="tyl">
+            <a href="@Model.AdresPowrotu" class="kierunek">Wyjdź z sali — @MalaLitera(powrot.Nazwa)</a>
+        </li>
+    </ul>
+}
+
+@section Scripts {
+    <script src="~/js/spacer.js" asp-append-version="true"></script>
+    <script src="~/js/mowa.js" asp-append-version="true"></script>
+}

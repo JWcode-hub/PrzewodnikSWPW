@@ -1,0 +1,29 @@
+@model BudynkiViewModel
+@{
+    ViewData["Title"] = "Spacer po budynkach";
+}
+
+<h1>Spacer po budynkach</h1>
+<p>Wybierz budynek, od którego chcesz zacząć. W każdym miejscu usłyszysz opis i wybierzesz kierunek:
+   prosto, w lewo, w prawo albo do tyłu.</p>
+
+@if (Model.Budynki.Count == 0)
+{
+    <p>Nie ma jeszcze żadnego budynku do zwiedzania. Skontaktuj się z portiernią Uczelni.</p>
+}
+else
+{
+    <h2>Budynki Uczelni</h2>
+    <ul>
+        @foreach (var b in Model.Budynki)
+        {
+            <li>
+                <a asp-action="Budynek" asp-route-kodBudynku="@b.Kod">@b.Nazwa</a>
+                @if (b.Adres is not null)
+                {
+                    <br />@b.Adres
+                }
+            </li>
+        }
+    </ul>
+}

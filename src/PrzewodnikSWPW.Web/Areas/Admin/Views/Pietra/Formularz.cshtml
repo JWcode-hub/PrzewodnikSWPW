@@ -1,0 +1,20 @@
+@model PietroFormularz
+@{
+    var nowe = Model.Id is null;
+    var tytul = nowe ? "Nowe piętro" : $"Edycja piętra {Model.Nazwa}";
+    ViewData["Title"] = ViewData.ModelState.IsValid ? tytul : $"Błąd w formularzu – {tytul}";
+}
+
+<h1>@tytul</h1>
+<partial name="_PodsumowanieBledow" />
+
+<form method="post" novalidate class="formularz-admina">
+    <pole for="BudynekId" typ="select" elementy="Model.Budynki" pusta-opcja="— wybierz budynek —" />
+    <pole for="Numer" typ="liczba" wskazowka="Liczba całkowita: −1 piwnica, 0 parter, 1 pierwsze piętro." />
+    <pole for="Nazwa" />
+    <pole for="Opis" typ="textarea" />
+    <div class="przyciski-formularza">
+        <button type="submit" class="btn btn-primary">@(nowe ? "Dodaj piętro" : "Zapisz zmiany")</button>
+        <a asp-action="Index">Anuluj i wróć do listy pięter</a>
+    </div>
+</form>

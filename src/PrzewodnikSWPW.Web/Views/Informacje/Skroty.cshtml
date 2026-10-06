@@ -1,0 +1,43 @@
+@{
+    ViewData["Title"] = "Skróty klawiszowe";
+}
+
+<h1>Skróty klawiszowe</h1>
+
+<p>Cały przewodnik obsłużysz klawiszami Tab, Shift+Tab i Enter — kierunki to zwykłe linki. Skróty tylko
+    przyspieszają spacer. Każdy używa klawisza Alt, bo pojedyncze litery i strzałki zajmują czytniki ekranu.</p>
+<p><strong>Skróty można wyłączyć</strong> w <a asp-controller="Ustawienia" asp-action="Index">ustawieniach dostępności</a>
+    — na przykład gdy kolidują z Twoim czytnikiem ekranu albo z programem wspomagającym.</p>
+
+<table class="table">
+    <caption>Skróty klawiszowe przewodnika (@SkrotyKlawiszowe.Wszystkie.Count)</caption>
+    <thead>
+        <tr>
+            <th scope="col">Klawisze</th>
+            <th scope="col">Działanie</th>
+            <th scope="col">Gdzie działa</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var s in SkrotyKlawiszowe.Wszystkie)
+        {
+            <tr>
+                <th scope="row"><kbd>@s.Klawisze</kbd></th>
+                <td>@s.Dzialanie</td>
+                <td>@s.GdzieDziala</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<h2>Klawisze w polu wyszukiwania sali</h2>
+<p>Podpowiedzi w polu wyszukiwania obsługujesz standardowo: strzałki w górę i w dół wybierają podpowiedź,
+    Enter ją zatwierdza, a Escape zamyka listę. To zwykłe zachowanie pola z podpowiedziami, nie skróty przewodnika —
+    działa także przy wyłączonych skrótach.</p>
+
+<h2>Jeśli skrót nie działa</h2>
+<ul>
+    <li>Na komputerach Mac zamiast Alt użyj klawisza Option.</li>
+    <li>Prawy Alt w polskim układzie klawiatury działa jak AltGr i wpisuje polskie znaki — użyj lewego Alt.</li>
+    <li>Sprawdź, czy skróty nie są wyłączone w ustawieniach dostępności.</li>
+</ul>

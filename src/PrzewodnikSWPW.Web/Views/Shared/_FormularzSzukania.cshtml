@@ -1,0 +1,13 @@
+@model string?
+@* Formularz wyszukiwania sal. Działa bez JavaScriptu (POST → przekierowanie na /szukaj?q=).
+   szukaj.js zamienia pole w combobox ARIA z podpowiedziami — wyłącznie jako ulepszenie. *@
+<form method="post" asp-controller="Szukaj" asp-action="Index" class="formularz-szukania" role="search">
+    <label for="pole-szukaj" class="form-label">Numer lub nazwa sali</label>
+    <p id="szukaj-pomoc" class="mb-2">Na przykład: A15, 15, sekretariat albo dziekanat.</p>
+    <div class="pole-z-podpowiedziami">
+        <input type="search" id="pole-szukaj" name="q" value="@Model" class="form-control"
+               autocomplete="off" spellcheck="false" maxlength="100"
+               aria-describedby="szukaj-pomoc" />
+    </div>
+    <button type="submit" class="btn btn-primary mt-2">Szukaj sali</button>
+</form>

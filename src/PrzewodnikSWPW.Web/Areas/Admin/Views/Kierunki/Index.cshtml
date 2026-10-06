@@ -1,0 +1,78 @@
+@model KierunkiPunktuViewModel
+@{
+    var p = Model.Punkt;
+    ViewData["Title"] = $"Kierunki punktu {p.Kod}";
+    var opisyAzymutow = new Dictionary<int, string>
+    {
+        [0] = "0° — w głąb budynku",
+        [90] = "90° — w prawo od wejścia",
+        [180] = "180° — w stronę wejścia",
+        [270] = "270° — w lewo od wejścia",
+    };
+}
+
+<h1>Kierunki punktu @p.Kod</h1>
+<p>@p.Nazwa (@p.Pietro)@(p.CzyAktywny ? "" : " — punkt nieaktywny").</p>
+<partial name="_Komunikat" />
+
+<p>Azymut jest <strong>bezwzględny</strong> — liczony względem planu budynku, a nie osoby. Przewodnik sam zamienia go
+   na „prosto / w lewo / w prawo / do tyłu” zależnie od tego, skąd użytkownik przyszedł.</p>
+
+<table class="table tabela-admina">
+    <caption>Cztery możliwe kierunki z punktu @p.Kod</caption>
+    <thead>
+        <tr>
+            <th scope="col">Azymut</th>
+            <th scope="col">Prowadzi do</th>
+            <th scope="col">Odległość</th>
+            <th scope="col">Rodzaj</th>
+            <th scope="col">Stan</th>
+            <th scope="col">Działania</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var azymut in new[] { 0, 90, 180, 270 })
+        {
+            <tr>
+                <th scope="row">@opisyAzymutow[azymut]</th>
+                @if (Model.WedlugAzymutu.TryGetValue(azymut, out var k))
+                {
+                    <td>
+                        @k.Cel
+                        @if (k.Opis is not null)
+                        {
+                            <br /><span class="opis-drugorzedny">Opis: @k.Opis</span>
+                        }
+                    </td>
+                    <td>@NawigacjaService.Metry(k.Waga)</td>
+                    <td>@k.Rodzaj</td>
+                    <td>@(k.CzyAktywny ? "przejście" : "brak przejścia (punkt orientacyjny)")@(k.MaPowrotny ? ", ma kierunek powrotny" : ", BEZ kierunku powrotnego")</td>
+                    <td>
+                        <ul class="dzialania">
+                            <li><a asp-action="Edytuj" asp-route-id="@k.Id">Edytuj<span class="visually-hidden"> kierunek @azymut°</span></a></li>
+                            @if (k.CzyAktywny)
+                            {
+                                <li><a asp-action="Dezaktywuj" asp-route-id="@k.Id">Dezaktywuj<span class="visually-hidden"> kierunek @azymut°</span></a></li>
+                            }
+                            else
+                            {
+                                <li>
+                                    <form method="post" asp-action="Aktywuj" asp-route-id="@k.Id">
+                                        <button type="submit" class="btn btn-secondary btn-sm">Przywróć<span class="visually-hidden"> kierunek @azymut°</span></button>
+                                    </form>
+                                </li>
+                            }
+                        </ul>
+                    </td>
+                }
+                else
+                {
+                    <td colspan="4">brak kierunku</td>
+                    <td><a asp-action="Nowy" asp-route-punkt="@p.Id" asp-route-azymut="@azymut">Dodaj kierunek @azymut°<span class="visually-hidden"> z punktu @p.Kod</span></a></td>
+                }
+            </tr>
+        }
+    </tbody>
+</table>
+
+<p><a asp-controller="Punkty" asp-action="Index">Wróć do listy punktów ruchu</a></p>

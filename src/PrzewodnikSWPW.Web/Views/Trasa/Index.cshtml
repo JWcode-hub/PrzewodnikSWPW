@@ -1,0 +1,72 @@
+@model TrasaFormularzViewModel
+@{
+    var saBledy = !ViewData.ModelState.IsValid;
+    ViewData["Title"] = saBledy ? "Błąd w formularzu – Wyznacz trasę" : "Wyznacz trasę";
+
+    string? Blad(string pole) =>
+        ViewData.ModelState.TryGetValue(pole, out var stan) && stan.Errors.Count > 0 ? stan.Errors[0].ErrorMessage : null;
+
+    // Fokus po błędzie: pierwsze błędne pole (autofocus działa bez JavaScriptu).
+    var autofocusUzyty = false;
+
+    var grupy = Model.Sale.GroupBy(s => $"{s.NazwaBudynku}, {s.NazwaPietra.ToLowerInvariant()}");
+}
+
+<h1 id="naglowek-strony" tabindex="-1">Wyznacz trasę</h1>
+<p>Wybierz salę, z której wychodzisz, i salę, do której chcesz dojść. Przewodnik poda kolejne kroki trasy.</p>
+
+@if (saBledy)
+{
+    <div class="komunikat komunikat--blad" tabindex="-1" data-fokus-po-zaladowaniu>
+        <h2 class="h5">Popraw zaznaczone pola</h2>
+        <ul>
+            @foreach (var (pole, stan) in ViewData.ModelState)
+            {
+                foreach (var blad in stan.Errors)
+                {
+                    <li><a href="#pole-@pole">@blad.ErrorMessage</a></li>
+                }
+            }
+        </ul>
+    </div>
+}
+
+<form method="post" asp-action="Index" novalidate class="formularz-trasy">
+    @foreach (var (pole, etykieta) in new[] { ("Z", "Sala początkowa"), ("Do", "Sala docelowa") })
+    {
+        var wybrana = pole == "Z" ? Model.Z : Model.Do;
+        var blad = Blad(pole);
+        var zFokusem = blad is not null && !autofocusUzyty;
+        autofocusUzyty |= zFokusem;
+        <div class="mb-3">
+            <label for="pole-@pole" class="form-label">@etykieta</label>
+            @if (blad is not null)
+            {
+                <p id="blad-@pole" class="komunikat-bledu">Błąd: @blad</p>
+            }
+            <select id="pole-@pole" name="@pole" class="form-select"
+                    aria-describedby="@(blad is null ? null : $"blad-{pole}")"
+                    aria-invalid="@(blad is null ? null : "true")"
+                    autofocus="@(zFokusem ? "autofocus" : null)">
+                <option value="">— wybierz salę —</option>
+                @foreach (var grupa in grupy)
+                {
+                    <optgroup label="@grupa.Key">
+                        @foreach (var s in grupa)
+                        {
+                            <option value="@s.Id" selected="@(s.Id == wybrana)">@s.Symbol — @s.Nazwa</option>
+                        }
+                    </optgroup>
+                }
+            </select>
+        </div>
+    }
+
+    <div class="form-check mb-1">
+        <input class="form-check-input" type="checkbox" asp-for="TrybWindy" id="pole-TrybWindy" aria-describedby="winda-opis" />
+        <label class="form-check-label" for="pole-TrybWindy">Trasa bez schodów (tryb windy)</label>
+    </div>
+    <p id="winda-opis">Trasa ominie schody. Jeśli trasy bez schodów nie ma, przewodnik o tym powie i pokaże trasę ze schodami.</p>
+
+    <button type="submit" class="btn btn-primary">Wyznacz trasę</button>
+</form>

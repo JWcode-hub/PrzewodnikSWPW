@@ -1,0 +1,42 @@
+@model ZgloszenieFormularz
+@{
+    const string Tytul = "Zgłoś brak dostępności";
+    ViewData["Title"] = ViewData.ModelState.IsValid ? Tytul : $"Błąd w formularzu – {Tytul}";
+}
+
+<h1>@Tytul</h1>
+
+<p>Jeśli jakaś część przewodnika jest dla Ciebie niedostępna — nie da się jej obsłużyć klawiaturą, czytnik ekranu
+    jej nie odczytuje albo opis miejsca jest niezrozumiały — napisz nam o tym. Masz do tego prawo na podstawie
+    art. 18 ustawy z dnia 4 kwietnia 2019 r. o dostępności cyfrowej stron internetowych i aplikacji mobilnych
+    podmiotów publicznych. Procedurę rozpatrywania zgłoszeń opisuje
+    <a href="/deklaracja-dostepnosci">Deklaracja Dostępności</a>.</p>
+
+<p class="komunikat"><strong>Wersja demonstracyjna.</strong> Przewodnik jest projektem dydaktycznym: formularz sprawdza
+    wpisane dane, ale zgłoszenia nie zapisuje ani nie wysyła.</p>
+
+<partial name="_PodsumowanieBledow" />
+
+<form method="post" novalidate class="formularz-admina">
+    <pole for="Tresc" typ="textarea" wiersze="6"
+          wskazowka="Co nie działa, na której stronie i czego potrzebujesz — np. opisu zdjęcia albo informacji w innej formie." />
+    <pole for="AdresStrony" autocomplete="url" />
+    <p>Pozostałe pola są opcjonalne — zgłoszenie możesz wysłać anonimowo. Adres e-mail podaj, jeśli chcesz dostać odpowiedź.</p>
+    <pole for="ImieNazwisko" autocomplete="name" />
+    <pole for="Email" typ="email" autocomplete="email" />
+
+    <section aria-labelledby="klauzula-rodo" class="klauzula">
+        <h2 id="klauzula-rodo" class="h5">Informacja o przetwarzaniu danych osobowych</h2>
+        <p>Administratorem danych podanych w formularzu jest Szkoła Wyższa im. Pawła Włodkowica w Płocku.
+            Dane przetwarzamy wyłącznie w celu rozpatrzenia zgłoszenia i udzielenia odpowiedzi, na podstawie
+            art. 6 ust. 1 lit. c RODO w związku z art. 18 ustawy o dostępności cyfrowej. Podanie imienia, nazwiska
+            i adresu e-mail jest dobrowolne; bez adresu nie będziemy mogli odpowiedzieć. Zgłoszenia przechowujemy
+            przez 24 miesiące od ich rozpatrzenia. Masz prawo dostępu do swoich danych, ich sprostowania, usunięcia
+            lub ograniczenia przetwarzania oraz prawo wniesienia skargi do Prezesa Urzędu Ochrony Danych Osobowych.
+            Szczegóły: <a href="/polityka-prywatnosci">Polityka prywatności</a>.</p>
+    </section>
+
+    <div class="przyciski-formularza">
+        <button type="submit" class="btn btn-primary">Wyślij zgłoszenie</button>
+    </div>
+</form>

@@ -1,0 +1,19 @@
+@{
+    ViewData["Title"] = "Panel administratora";
+}
+
+<h1>Panel administratora</h1>
+<p>Tu zarządzasz danymi przewodnika: budynkami, piętrami, salami oraz grafem nawigacji — punktami ruchu i kierunkami między nimi.
+   Każda zmiana trafia do rejestru zmian.</p>
+
+<h2>Od czego zacząć</h2>
+<ol>
+    <li><a asp-controller="Budynki" asp-action="Index">Budynki</a> i <a asp-controller="Pietra" asp-action="Index">piętra</a> — struktura Uczelni.</li>
+    <li><a asp-controller="Punkty" asp-action="Index">Punkty ruchu</a> — miejsca, w których użytkownik wybiera kierunek. Dla każdego punktu dodaj kierunki.</li>
+    <li><a asp-controller="Sale" asp-action="Index">Sale</a> — z punktem wejściowym przed drzwiami, bez którego nie da się wyznaczyć trasy.</li>
+</ol>
+
+<h2>Konto</h2>
+<ul>
+    <li><a asp-area="" asp-controller="Konto" asp-action="ZmianaHasla">Zmień hasło</a></li>
+</ul>

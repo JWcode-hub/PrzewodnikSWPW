@@ -1,54 +1,569 @@
-/* Paleta i typografia: docs/01_WYMAGANIA.md UI-04, UI-05. Rozmiary tekstu wyłącznie w rem. */
+/* ==========================================================================
+   Multimedialny przewodnik po Uczelni — arkusz stylów
+   Motywy: docs/06_DOSTEPNOSC_TTS.md §5.1 · paleta i typografia: 01_WYMAGANIA.md UI-04, UI-05
+   Zasady: rozmiary tekstu wyłącznie w rem, żadnych stałych wysokości kontenerów z tekstem
+   (reflow, WCAG 1.4.10), obrysu fokusa NIGDY nie usuwamy (CLAUDE.md, zasada 4).
+   Każda para kolor/tło sprawdzona: tekst ≥ 4,5:1 (w praktyce ≥ 7:1), elementy nietekstowe ≥ 3:1.
+   ========================================================================== */
+
+/* --- 1. Motyw podstawowy (domyślny) ------------------------------------- */
 :root {
-  --kolor-tekst: #0B2545;
+  --kolor-tekst: #0B2545;           /* 15,4:1 na białym */
   --kolor-tlo: #FFFFFF;
-  --kolor-akcent: #B33A00;
-  --kolor-fokus: #B33A00;
+  --kolor-tlo-pomocnicze: #F2F4F7;  /* nagłówek i stopka; tekst 14,0:1 */
+  --kolor-akcent: #B33A00;          /* 6,0:1 na białym */
+  --kolor-fokus: #B33A00;           /* 6,0:1 na białym, 5,4:1 na tle pomocniczym */
+  --kolor-obramowanie: #5A6B7F;     /* 5,5:1 — pola formularzy (≥ 3:1, WCAG 1.4.11) */
+  --kolor-blad: #A4161A;            /* 7,8:1 */
+  --kolor-sukces: #1B5E20;          /* 7,9:1 */
+  color-scheme: light;
+}
+
+/* --- 2. Motyw wysokiego kontrastu — czarno-żółty (Zarządzenie §1 pkt 2) -- */
+html[data-motyw="wysoki-kontrast"] {
+  --kolor-tekst: #FFFF00;           /* 19,6:1 na czarnym */
+  --kolor-tlo: #000000;
+  --kolor-tlo-pomocnicze: #000000;
+  --kolor-akcent: #FFFF00;
+  --kolor-fokus: #FFFFFF;           /* 21:1 — odróżnia fokus od żółtego tekstu */
+  --kolor-obramowanie: #FFFF00;
+  --kolor-blad: #FFFF00;            /* błąd rozpoznawalny po tekście „Błąd:”, nie po kolorze */
+  --kolor-sukces: #FFFF00;
+  color-scheme: dark;
+}
+
+/* --- 3. Motyw ciemny ------------------------------------------------------ */
+html[data-motyw="ciemny"] {
+  --kolor-tekst: #E8EAED;           /* 15,5:1 na #121212 */
+  --kolor-tlo: #121212;
+  --kolor-tlo-pomocnicze: #1E1E1E;  /* tekst 13,8:1 */
+  --kolor-akcent: #FFB38A;          /* 10,8:1 */
+  --kolor-fokus: #FFB38A;
+  --kolor-obramowanie: #9AA0A6;     /* 7,1:1 */
+  --kolor-blad: #FF8A80;            /* 8,2:1 */
+  --kolor-sukces: #81C995;          /* 9,6:1 */
+  color-scheme: dark;
+}
+
+/* --- 4. Motyw „jak w systemie” — respektuje ustawienia urządzenia -------- */
+@media (prefers-color-scheme: dark) {
+  html[data-motyw="systemowy"] {
+    --kolor-tekst: #E8EAED;
+    --kolor-tlo: #121212;
+    --kolor-tlo-pomocnicze: #1E1E1E;
+    --kolor-akcent: #FFB38A;
+    --kolor-fokus: #FFB38A;
+    --kolor-obramowanie: #9AA0A6;
+    --kolor-blad: #FF8A80;
+    --kolor-sukces: #81C995;
+    color-scheme: dark;
+  }
+}
+
+/* Po motywie ciemnym, aby „więcej kontrastu” w systemie wygrywało. */
+@media (prefers-contrast: more) {
+  html[data-motyw="systemowy"] {
+    --kolor-tekst: #FFFF00;
+    --kolor-tlo: #000000;
+    --kolor-tlo-pomocnicze: #000000;
+    --kolor-akcent: #FFFF00;
+    --kolor-fokus: #FFFFFF;
+    --kolor-obramowanie: #FFFF00;
+    --kolor-blad: #FFFF00;
+    --kolor-sukces: #FFFF00;
+    color-scheme: dark;
+  }
+}
+
+/* --- 5. Nadpisanie kolorów Bootstrapa (ryzyko P-11) ------------------------
+   Domyślne szarości Bootstrapa (.text-muted, .form-text, .btn-secondary) nie spełniają
+   4,5:1. Wszystkie zmienne kolorów wskazują na paletę motywu. */
+:root,
+html[data-motyw] {
   --bs-body-color: var(--kolor-tekst);
   --bs-body-bg: var(--kolor-tlo);
+  --bs-emphasis-color: var(--kolor-tekst);
+  --bs-secondary-color: var(--kolor-tekst);
+  --bs-tertiary-color: var(--kolor-tekst);
+  --bs-secondary-bg: var(--kolor-tlo-pomocnicze);
+  --bs-tertiary-bg: var(--kolor-tlo-pomocnicze);
+  --bs-border-color: var(--kolor-obramowanie);
   --bs-link-color: var(--kolor-tekst);
-  --bs-link-color-rgb: 11, 37, 69;
   --bs-link-hover-color: var(--kolor-akcent);
-  --bs-link-hover-color-rgb: 179, 58, 0;
+  --bs-heading-color: var(--kolor-tekst);
+  --bs-form-invalid-color: var(--kolor-blad);
+  --bs-form-invalid-border-color: var(--kolor-blad);
+  --bs-form-valid-color: var(--kolor-sukces);
+  --bs-form-valid-border-color: var(--kolor-sukces);
 }
 
-html {
-  font-size: 112.5%; /* 18 px przy domyślnych ustawieniach przeglądarki */
+/* Szary tekst pomocniczy zabroniony — zawsze pełny kontrast. */
+.text-muted,
+.text-body-secondary,
+.text-secondary,
+.form-text {
+  color: var(--kolor-tekst) !important;
 }
 
-body {
+.btn-primary {
+  --bs-btn-color: var(--kolor-tlo);
+  --bs-btn-bg: var(--kolor-tekst);
+  --bs-btn-border-color: var(--kolor-tekst);
+  --bs-btn-hover-color: var(--kolor-tlo);
+  --bs-btn-hover-bg: var(--kolor-akcent);
+  --bs-btn-hover-border-color: var(--kolor-akcent);
+  --bs-btn-active-color: var(--kolor-tlo);
+  --bs-btn-active-bg: var(--kolor-akcent);
+  --bs-btn-active-border-color: var(--kolor-akcent);
+}
+
+.btn-secondary {
+  --bs-btn-color: var(--kolor-tekst);
+  --bs-btn-bg: var(--kolor-tlo);
+  --bs-btn-border-color: var(--kolor-tekst);
+  --bs-btn-hover-color: var(--kolor-tlo);
+  --bs-btn-hover-bg: var(--kolor-tekst);
+  --bs-btn-hover-border-color: var(--kolor-tekst);
+  --bs-btn-active-color: var(--kolor-tlo);
+  --bs-btn-active-bg: var(--kolor-tekst);
+  --bs-btn-active-border-color: var(--kolor-tekst);
+}
+
+.form-control,
+.form-select {
   color: var(--kolor-tekst);
   background-color: var(--kolor-tlo);
-  line-height: 1.6;
+  border: 2px solid var(--kolor-obramowanie);
 }
 
-a {
-  color: var(--kolor-tekst);
-  text-decoration: underline;
+/* Natywne pola wyboru i opcji zamiast obrazków Bootstrapa: biały „ptaszek” Bootstrapa znika
+   na jasnym wypełnieniu w motywie ciemnym i czarno-żółtym. accent-color sam dobiera
+   kontrastowy znacznik do koloru wypełnienia. */
+.form-check-input,
+.form-check-input:checked {
+  appearance: auto;
+  -webkit-appearance: auto;
+  accent-color: var(--kolor-tekst);
+  background-image: none;
+  background-color: transparent;
+  border: 0;
 }
 
-/* Widoczny fokus na każdym elemencie — nigdy nie usuwamy obrysu (CLAUDE.md, zasada 4). */
-:focus-visible {
-  outline: 3px solid var(--kolor-fokus);
+/* Strzałka listy rozwijanej Bootstrapa jest ciemnoszarym obrazkiem — w ciemnych motywach niewidoczna. */
+html[data-motyw="wysoki-kontrast"] .form-select,
+html[data-motyw="ciemny"] .form-select {
+  background-image: none;
+  padding-right: 0.75rem;
+}
+
+/* --- 6. Fokus — NIGDY nie usuwamy obrysu ----------------------------------
+   Bootstrap ustawia `outline: 0` na .btn, .form-control, .form-select i .form-check-input
+   (zastępując go półprzezroczystym cieniem o zbyt niskim kontraście). Przywracamy obrys
+   z !important, bo selektory Bootstrapa mają wyższą specyficzność. */
+:focus-visible,
+.btn:focus-visible,
+.form-control:focus,
+.form-select:focus,
+.form-check-input:focus-visible,
+.nav-link:focus-visible {
+  outline: 3px solid var(--kolor-fokus) !important;
   outline-offset: 2px;
+  box-shadow: none !important;
   border-radius: 2px;
 }
 
-.link-pomin {
-  position: absolute;
-  left: -100vw;
-  top: 0;
-  padding: 0.5rem 1rem;
-  background: var(--kolor-tlo);
+/* --- 7. Typografia — podstawa 18 px, rozmiary wyłącznie w rem -------------- */
+html {
+  font-size: 112.5%;                /* 18 px przy domyślnych 16 px przeglądarki */
+}
+html[data-rozmiar="125"] { font-size: 140.625%; }
+html[data-rozmiar="150"] { font-size: 168.75%; }
+html[data-rozmiar="200"] { font-size: 225%; }
+
+body {
+  font-family: "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  font-size: 1rem;
+  line-height: 1.6;
   color: var(--kolor-tekst);
-  z-index: 1000;
+  background-color: var(--kolor-tlo);
+  overflow-wrap: break-word;        /* długie słowa i adresy nie wymuszają przewijania poziomego */
 }
 
-.link-pomin:focus {
+/* Skala typograficzna 1,25 (UI-05). */
+h1, .h1 { font-size: 2.441rem; line-height: 1.25; }
+h2, .h2 { font-size: 1.953rem; line-height: 1.3; }
+h3, .h3 { font-size: 1.563rem; line-height: 1.35; }
+h4, .h4 { font-size: 1.25rem; line-height: 1.4; }
+h5, .h5 { font-size: 1.125rem; line-height: 1.4; }
+
+@media (max-width: 575.98px) {
+  h1, .h1 { font-size: 1.953rem; }
+  h2, .h2 { font-size: 1.563rem; }
+}
+
+/* Linki wyróżnione podkreśleniem, nie samym kolorem (WCAG 1.4.1). */
+a {
+  color: var(--kolor-tekst);
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+a:hover {
+  color: var(--kolor-akcent);
+  text-decoration-thickness: 0.15em;
+}
+
+/* --- 8. Link „Przejdź do treści głównej” ----------------------------------
+   Poza ekranem, ale NIE display:none ani visibility:hidden — czytnik go widzi,
+   a po otrzymaniu fokusa pojawia się w lewym górnym rogu. */
+.link-pomin {
+  position: absolute;
+  top: 0.5rem;
   left: 0.5rem;
+  z-index: 1000;
+  padding: 0.75rem 1rem;
+  color: var(--kolor-tlo);
+  background-color: var(--kolor-tekst);
+  font-weight: 700;
+  transform: translateY(-200%);
+}
+.link-pomin:focus {
+  transform: none;
+  color: var(--kolor-tlo);
+}
+
+/* --- 9. Układ -------------------------------------------------------------- */
+.naglowek-serwisu,
+.stopka-serwisu {
+  background-color: var(--kolor-tlo-pomocnicze);
+  border-color: var(--kolor-obramowanie);
+  border-style: solid;
+  border-width: 0;
+}
+.naglowek-serwisu {
+  border-bottom-width: 2px;
+  padding: 0.75rem 0;
+}
+.stopka-serwisu {
+  border-top-width: 2px;
+  margin-top: 2rem;
+  padding: 1.5rem 0;
+}
+
+.lista-nawigacji,
+.lista-stopki {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.5rem;
+}
+.lista-stopki {
+  margin-bottom: 1.5rem;
+}
+
+/* Element flex domyślnie nie kurczy się poniżej najdłuższego słowa — przy tekście 200% na
+   ekranie 320 px „Multimedialny” wymuszało przewijanie poziome (WCAG 1.4.10). */
+.lista-nawigacji > li,
+.lista-stopki > li {
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Logowanie, panel i wylogowanie przy prawej krawędzi; po zawinięciu listy — od lewej, jak reszta. */
+.nawigacja-konto {
+  margin-left: auto;
 }
 
 .nazwa-serwisu {
   font-weight: 700;
   font-size: 1.25rem;
+  overflow-wrap: anywhere;
+}
+
+/* Cele dotykowe min. 44×44 px (WCAG 2.5.8, UI-08). */
+.lista-nawigacji a,
+.lista-stopki a {
+  display: inline-block;
+  min-height: 2.75rem;
+  padding: 0.5rem 0;
+}
+.btn,
+.form-control,
+.form-select {
+  min-height: 2.75rem;
+  font-size: 1rem;
+}
+.form-check {
+  min-height: 2.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding-left: 0;
+}
+.form-check .form-check-input {
+  width: 1.5rem;
+  height: 1.5rem;
+  margin: 0;
+  flex-shrink: 0;
+  float: none;
+}
+
+.przelacznik-motywu {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  margin-bottom: 1.5rem;
+}
+.przelacznik-motywu .form-select {
+  width: auto;
+  max-width: 100%;
+}
+
+legend {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+/* Na telefonie przyciski na pełną szerokość (UI-08). */
+@media (max-width: 575.98px) {
+  .btn {
+    width: 100%;
+  }
+}
+
+/* --- 9a. Lista kierunków na ekranie miejsca (06 §2.2, UI-03, UI-08) -------
+   Jedna kolumna, pełna szerokość, cel min. 48 px. Kierunek bez przejścia jest zwykłym tekstem
+   z przerywaną ramką — różni się od linku kształtem ramki i brakiem podkreślenia, nie tylko kolorem. */
+.lista-kierunkow {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1.5rem;
+  display: grid;
+  gap: 0.75rem;
+  max-width: 40rem;
+}
+.lista-kierunkow .kierunek {
+  display: block;
+  min-height: 3rem;
+  padding: 0.75rem 1rem;
+  border: 2px solid var(--kolor-tekst);
+}
+.lista-kierunkow a.kierunek {
+  font-weight: 700;
+}
+.lista-kierunkow a.kierunek:hover {
+  background-color: var(--kolor-tekst);
+  color: var(--kolor-tlo);
+}
+.lista-kierunkow .kierunek--brak {
+  border-style: dashed;
+  border-color: var(--kolor-obramowanie);
+}
+
+/* --- 9b. Wyszukiwanie sal i podpowiedzi (combobox) -----------------------
+   Aktywna podpowiedź: odwrócone kolory ORAZ pogrubienie i ramka — nie sam kolor (WCAG 1.4.1). */
+.formularz-szukania {
+  max-width: 40rem;
+  margin-bottom: 1.5rem;
+}
+.pole-z-podpowiedziami {
+  position: relative;
+}
+.lista-podpowiedzi {
+  position: absolute;
+  z-index: 10;
+  left: 0;
+  right: 0;
+  margin: 0.25rem 0 0;
+  padding: 0;
+  list-style: none;
+  background-color: var(--kolor-tlo);
+  border: 2px solid var(--kolor-tekst);
+  max-height: 60vh;
+  overflow-y: auto;
+}
+.lista-podpowiedzi [role="option"] {
+  min-height: 2.75rem;
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  border: 2px solid transparent;
+}
+/* Najechanie myszą wygląda inaczej niż podpowiedź aktywna z klawiatury — inaczej przy kursorze
+   nad listą dwie pozycje wyglądałyby na wybrane i nie byłoby wiadomo, którą wybierze Enter. */
+.lista-podpowiedzi [role="option"]:hover {
+  border-color: var(--kolor-tekst);
+  text-decoration: underline;
+}
+.lista-podpowiedzi [role="option"][aria-selected="true"] {
+  background-color: var(--kolor-tekst);
+  color: var(--kolor-tlo);
+  font-weight: 700;
+  border-color: var(--kolor-fokus);
+  text-decoration: none;
+}
+.lista-wynikow {
+  list-style: none;
+  padding: 0;
+  max-width: 40rem;
+}
+.lista-wynikow > li {
+  border-top: 2px solid var(--kolor-obramowanie);
+  padding: 1rem 0;
+}
+.linki-wyniku {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.5rem;
+}
+.linki-wyniku a {
+  display: inline-block;
+  min-height: 2.75rem;
+  padding: 0.5rem 0;
+}
+
+/* --- 9c. Panel administratora ---------------------------------------------- */
+.menu-admina ul {
+  list-style: none;
+  padding: 0.75rem 0;
+  margin: 0 0 1.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.25rem;
+  border-bottom: 2px solid var(--kolor-obramowanie);
+}
+.menu-admina a {
+  display: inline-block;
+  min-height: 2.75rem;
+  padding: 0.5rem 0;
+}
+.menu-admina a[aria-current="page"] {
+  font-weight: 700;
+  text-decoration-thickness: 0.2em;          /* bieżąca sekcja: grubsze podkreślenie i pogrubienie, nie sam kolor */
+}
+.formularz-admina {
+  max-width: 45rem;
+}
+.wskazowka {
+  margin-bottom: 0.5rem;
+}
+.pole--wybor .form-check {
+  min-height: 2.75rem;
+}
+.przyciski-formularza {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1.5rem;
+  margin-top: 1.5rem;
+}
+.tabela-admina {
+  --bs-table-color: var(--kolor-tekst);
+  --bs-table-bg: var(--kolor-tlo);
+  --bs-table-border-color: var(--kolor-obramowanie);
+}
+.tabela-admina caption {
+  caption-side: top;
+  color: var(--kolor-tekst);
+  font-weight: 700;
+}
+.dzialania {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+}
+.dzialania a {
+  display: inline-block;
+  min-height: 2.75rem;
+  padding: 0.5rem 0;
+}
+.tabela-przewijana {
+  overflow-x: auto;
+}
+.json {
+  color: var(--kolor-tekst);
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+.formularz-wylogowania {
+  display: inline;
+}
+
+/* --- 9d. Odczyt opisu mową (panel widoczny tylko po włączeniu mowy w ustawieniach) --- */
+.panel-mowy {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0 0 1rem;
+}
+.panel-mowy .komunikat {
+  flex-basis: 100%;
+  margin: 0;
+}
+
+/* --- 10. Komunikaty — informacja nigdy wyłącznie kolorem ------------------- */
+.komunikat {
+  border: 2px solid currentColor;
+  border-left-width: 0.5rem;
+  padding: 0.75rem 1rem;
+  margin: 1rem 0;
+}
+.komunikat--sukces { color: var(--kolor-sukces); }
+.komunikat--blad { color: var(--kolor-blad); }
+.komunikat ul { margin-bottom: 0; }
+.komunikat a { color: inherit; }
+
+.komunikat-bledu {
+  color: var(--kolor-blad);
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+/* --- 11. Ruch — prefers-reduced-motion i ustawienie „Ogranicz animacje” --- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+html[data-animacje="ograniczone"] *,
+html[data-animacje="ograniczone"] *::before,
+html[data-animacje="ograniczone"] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* --- Zdjęcia i aktywne obszary (WF-26, WF-27) ------------------------------
+   width/height w <img> rezerwują miejsce — height: auto zachowuje proporcje
+   przy pomniejszeniu, więc tekst pod zdjęciem nie przeskakuje (P-13). */
+figure img {
+  height: auto;
+}
+.edytor-obszarow {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+}
+.edytor-obszarow img {
+  cursor: crosshair;
+  touch-action: none;
+}
+/* Podwójna ramka (ciemna i jasna) — widoczna na jasnym i ciemnym fragmencie zdjęcia. */
+.edytor-obszarow__zaznaczenie {
+  position: absolute;
+  border: 2px solid #000;
+  box-shadow: 0 0 0 2px #fff, inset 0 0 0 2px #fff;
+  pointer-events: none;
 }

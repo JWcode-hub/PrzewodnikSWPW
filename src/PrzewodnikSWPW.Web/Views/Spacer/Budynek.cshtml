@@ -1,0 +1,41 @@
+@model BudynekViewModel
+@{
+    var b = Model.Budynek;
+    ViewData["Title"] = b.Nazwa;
+}
+
+<h1>@b.Nazwa</h1>
+@if (b.Adres is not null)
+{
+    <p>@b.Adres</p>
+}
+
+@if (Model.AdresStartu is not null && b.PunktStartowy is { } start)
+{
+    <p><a href="@Model.AdresStartu" class="btn btn-primary">Rozpocznij spacer od miejsca: @start.Nazwa</a></p>
+}
+
+<h2>Wybierz miejsce startowe</h2>
+@foreach (var pietro in b.Pietra)
+{
+    <h3>@pietro.Nazwa</h3>
+    @if (pietro.Punkty.Count == 0)
+    {
+        <p>Na tym piętrze nie ma jeszcze opisanych miejsc.</p>
+    }
+    else
+    {
+        <ul>
+            @foreach (var (punkt, adres) in Model.PunktyNaPietrach[pietro.Numer])
+            {
+                <li><a href="@adres">@punkt.Nazwa</a></li>
+            }
+        </ul>
+    }
+}
+
+@if (b.OpisDostepnosciArchitektonicznej is not null)
+{
+    <h2>Dostępność architektoniczna budynku</h2>
+    <p>@b.OpisDostepnosciArchitektonicznej</p>
+}

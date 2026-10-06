@@ -1,0 +1,27 @@
+@* Podsumowanie błędów formularza z linkami do pól (WCAG 3.3.1). Fokus trafia na pierwsze błędne pole
+   przez autofocus z PoleTagHelper, a o błędzie mówi też tytuł strony. Bez role="alert": to byłby drugi
+   obszar live i błąd czytany dwa razy (site.js, zasada ogłaszania). Gdy żadne pole nie ma autofocus
+   (błąd dotyczy całego formularza), site.js przenosi fokus na to podsumowanie. *@
+@if (!ViewData.ModelState.IsValid)
+{
+    var bledy = ViewData.ModelState
+        .Where(p => p.Value is { Errors.Count: > 0 })
+        .SelectMany(p => p.Value!.Errors.Select(b => (Pole: p.Key, b.ErrorMessage)))
+        .ToList();
+    <div class="komunikat komunikat--blad" tabindex="-1" data-fokus-po-zaladowaniu>
+        <h2 class="h5">@(bledy.Count == 1 ? "Popraw 1 błąd w formularzu" : $"Popraw błędy w formularzu ({bledy.Count})")</h2>
+        <ul>
+            @foreach (var (pole, komunikat) in bledy)
+            {
+                if (string.IsNullOrEmpty(pole))
+                {
+                    <li>@komunikat</li>
+                }
+                else
+                {
+                    <li><a href="#@TagBuilder.CreateSanitizedId(pole, "_")">@komunikat</a></li>
+                }
+            }
+        </ul>
+    </div>
+}

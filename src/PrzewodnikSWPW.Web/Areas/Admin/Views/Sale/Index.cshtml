@@ -1,0 +1,54 @@
+@model List<SalaWiersz>
+@{
+    ViewData["Title"] = "Sale";
+}
+
+<h1>Sale</h1>
+<partial name="_Komunikat" />
+<p><a asp-action="Nowa" class="btn btn-primary">Dodaj salę</a></p>
+
+<table class="table tabela-admina">
+    <caption>Sale (@Model.Count)</caption>
+    <thead>
+        <tr>
+            <th scope="col">Symbol</th>
+            <th scope="col">Nazwa</th>
+            <th scope="col">Piętro</th>
+            <th scope="col">Typ</th>
+            <th scope="col">Punkt wejściowy</th>
+            <th scope="col">Stan</th>
+            <th scope="col">Działania</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var s in Model)
+        {
+            <tr>
+                <th scope="row">@s.Symbol</th>
+                <td>@s.Nazwa</td>
+                <td>@s.Pietro</td>
+                <td>@s.Typ</td>
+                <td>@(s.PunktWejsciowy ?? "brak — trasa do tej sali nie zadziała")</td>
+                <td>@(s.CzyAktywna ? "aktywna" : "nieaktywna")</td>
+                <td>
+                    <ul class="dzialania">
+                        <li><a asp-action="Edytuj" asp-route-id="@s.Id">Edytuj<span class="visually-hidden"> salę @s.Symbol</span></a></li>
+                        <li><a asp-controller="Zdjecia" asp-action="Index" asp-route-sala="@s.Id">Zdjęcia<span class="visually-hidden"> sali @s.Symbol</span></a></li>
+                        @if (s.CzyAktywna)
+                        {
+                            <li><a asp-action="Dezaktywuj" asp-route-id="@s.Id">Dezaktywuj<span class="visually-hidden"> salę @s.Symbol</span></a></li>
+                        }
+                        else
+                        {
+                            <li>
+                                <form method="post" asp-action="Aktywuj" asp-route-id="@s.Id">
+                                    <button type="submit" class="btn btn-secondary btn-sm">Przywróć<span class="visually-hidden"> salę @s.Symbol</span></button>
+                                </form>
+                            </li>
+                        }
+                    </ul>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

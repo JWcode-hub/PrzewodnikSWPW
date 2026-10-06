@@ -1,0 +1,104 @@
+@model DeklaracjaDostepnosciOptions
+@{
+    ViewData["Title"] = "Polityka prywatności";
+}
+
+<h1>Polityka prywatności</h1>
+
+<p>Ta strona wyjaśnia, jakie dane zbiera Multimedialny przewodnik po Uczelni, po co i jak długo je przechowujemy.
+    Przewodnik nie wymaga zakładania konta, nie używa narzędzi analitycznych ani reklamowych i nie przekazuje danych
+    innym firmom.</p>
+
+<h2>Administrator danych</h2>
+<p>Administratorem danych osobowych jest @Model.NazwaPodmiotu.
+    @if (Model.Email is not null)
+    {
+        <text>W sprawach ochrony danych napisz na adres <a href="mailto:@Model.Email">@Model.Email</a>.</text>
+    }
+    else
+    {
+        <text>Dane kontaktowe inspektora ochrony danych zostaną podane przed publikacją serwisu.</text>
+    }
+</p>
+
+<h2>Jakie dane i w jakim celu</h2>
+<table class="table">
+    <caption>Dane przetwarzane przez przewodnik</caption>
+    <thead>
+        <tr>
+            <th scope="col">Dane</th>
+            <th scope="col">Cel</th>
+            <th scope="col">Podstawa prawna</th>
+            <th scope="col">Jak długo</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <th scope="row">Zgłoszenie braku dostępności: treść oraz — jeśli je podasz — imię, nazwisko, adres e-mail i adres strony</th>
+            <td>Rozpatrzenie zgłoszenia i odpowiedź</td>
+            <td>art. 6 ust. 1 lit. c RODO w związku z art. 18 ustawy o dostępności cyfrowej</td>
+            <td>24 miesiące od rozpatrzenia zgłoszenia</td>
+        </tr>
+        <tr>
+            <th scope="row">Frazy wpisane w wyszukiwarce sal i tras (bez danych o osobie)</th>
+            <td>Wykrywanie brakujących sal i tras w danych przewodnika</td>
+            <td>art. 6 ust. 1 lit. f RODO — prawnie uzasadniony interes: poprawność przewodnika</td>
+            <td>24 miesiące</td>
+        </tr>
+        <tr>
+            <th scope="row">Konto redaktora: adres e-mail, historia zmian w panelu administratora</th>
+            <td>Logowanie do panelu i rejestr zmian danych</td>
+            <td>art. 6 ust. 1 lit. f RODO — rozliczalność zmian w danych nawigacji</td>
+            <td>przez czas pełnienia funkcji redaktora, rejestr zmian — 24 miesiące</td>
+        </tr>
+        <tr>
+            <th scope="row">Dzienniki serwera: adres IP, data i adres odwiedzonej strony</th>
+            <td>Bezpieczeństwo i diagnozowanie błędów</td>
+            <td>art. 6 ust. 1 lit. f RODO — bezpieczeństwo serwisu</td>
+            <td>24 miesiące</td>
+        </tr>
+    </tbody>
+</table>
+<p><strong>Wersja demonstracyjna:</strong> w tym projekcie dydaktycznym formularz zgłoszenia nie zapisuje danych,
+    a okresy przechowywania nie są egzekwowane automatycznie. Tabela opisuje zasady serwisu produkcyjnego.</p>
+
+<h2>Pliki cookie i pamięć przeglądarki</h2>
+<p>Przewodnik używa wyłącznie plików cookie niezbędnych do działania, dlatego nie prosi o zgodę na ich zapisanie.</p>
+<table class="table">
+    <caption>Pliki cookie i dane zapisywane w przeglądarce</caption>
+    <thead>
+        <tr>
+            <th scope="col">Nazwa</th>
+            <th scope="col">Do czego służy</th>
+            <th scope="col">Jak długo</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <th scope="row"><code>@UstawieniaDostepnosciService.NazwaCiasteczka</code></th>
+            <td>Twoje ustawienia dostępności: motyw, rozmiar tekstu, skróty klawiszowe</td>
+            <td>1 rok</td>
+        </tr>
+        <tr>
+            <th scope="row">Pamięć lokalna przeglądarki (localStorage)</th>
+            <td>Kopia ustawień dostępności dla skryptów strony — nie jest wysyłana na serwer</td>
+            <td>do czasu wyczyszczenia danych przeglądarki</td>
+        </tr>
+        <tr>
+            <th scope="row"><code>.AspNetCore.Antiforgery.…</code></th>
+            <td>Ochrona formularzy przed podszywaniem się pod Ciebie</td>
+            <td>do zamknięcia przeglądarki</td>
+        </tr>
+        <tr>
+            <th scope="row"><code>przewodnik_sesja</code></th>
+            <td>Zalogowanie do panelu administratora — tylko dla redaktorów</td>
+            <td>30 minut bez aktywności</td>
+        </tr>
+    </tbody>
+</table>
+<p>Możesz usunąć pliki cookie w ustawieniach przeglądarki. Przewodnik będzie działał dalej, ale zapomni Twoje ustawienia dostępności.</p>
+
+<h2>Twoje prawa</h2>
+<p>Masz prawo dostępu do swoich danych, ich sprostowania, usunięcia lub ograniczenia przetwarzania, prawo sprzeciwu
+    wobec przetwarzania opartego na prawnie uzasadnionym interesie oraz prawo wniesienia skargi do Prezesa Urzędu
+    Ochrony Danych Osobowych — <a href="https://uodo.gov.pl/">strona Urzędu Ochrony Danych Osobowych</a>.</p>

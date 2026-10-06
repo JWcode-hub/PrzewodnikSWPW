@@ -1,0 +1,49 @@
+@model List<BudynekWiersz>
+@{
+    ViewData["Title"] = "Budynki";
+}
+
+<h1>Budynki</h1>
+<partial name="_Komunikat" />
+<p><a asp-action="Nowy" class="btn btn-primary">Dodaj budynek</a></p>
+
+<table class="table tabela-admina">
+    <caption>Budynki Uczelni (@Model.Count)</caption>
+    <thead>
+        <tr>
+            <th scope="col">Kod</th>
+            <th scope="col">Nazwa</th>
+            <th scope="col">Pięter</th>
+            <th scope="col">Stan</th>
+            <th scope="col">Działania</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var b in Model)
+        {
+            <tr>
+                <th scope="row">@b.Kod</th>
+                <td>@b.Nazwa</td>
+                <td>@b.LiczbaPieter</td>
+                <td>@(b.CzyAktywny ? "aktywny" : "nieaktywny")</td>
+                <td>
+                    <ul class="dzialania">
+                        <li><a asp-action="Edytuj" asp-route-id="@b.Id">Edytuj<span class="visually-hidden"> budynek @b.Kod</span></a></li>
+                        @if (b.CzyAktywny)
+                        {
+                            <li><a asp-action="Dezaktywuj" asp-route-id="@b.Id">Dezaktywuj<span class="visually-hidden"> budynek @b.Kod</span></a></li>
+                        }
+                        else
+                        {
+                            <li>
+                                <form method="post" asp-action="Aktywuj" asp-route-id="@b.Id">
+                                    <button type="submit" class="btn btn-secondary btn-sm">Przywróć<span class="visually-hidden"> budynek @b.Kod</span></button>
+                                </form>
+                            </li>
+                        }
+                    </ul>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

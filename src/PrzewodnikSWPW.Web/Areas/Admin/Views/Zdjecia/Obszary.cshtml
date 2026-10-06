@@ -1,0 +1,50 @@
+@model ObszaryViewModel
+@{
+    ViewData["Title"] = $"Aktywne obszary: {Model.NazwaZdjecia} ({Model.NazwaWlasciciela})";
+}
+
+<h1>Aktywne obszary: @Model.NazwaZdjecia (@Model.NazwaWlasciciela)</h1>
+<partial name="_Komunikat" />
+<p>Aktywny obszar to fragment zdjęcia, który w spacerze działa jak link do jednego z kierunków — np. drzwi,
+   w które można wejść. To wyłącznie dodatek: lista kierunków pod zdjęciem pozostaje podstawowym sposobem
+   nawigacji. Każdy obszar ma etykietę — bez niej jest dla czytnika ekranu niewidoczny.</p>
+<p><a asp-action="NowyObszar" asp-route-id="@Model.ZdjecieId" class="btn btn-primary">Dodaj obszar<span class="visually-hidden">: @Model.NazwaZdjecia</span></a></p>
+
+@if (Model.Obszary.Count == 0)
+{
+    <p>To zdjęcie nie ma jeszcze aktywnych obszarów.</p>
+}
+else
+{
+    <table class="table tabela-admina">
+        <caption>Aktywne obszary (@Model.Obszary.Count)</caption>
+        <thead>
+            <tr>
+                <th scope="col">Etykieta</th>
+                <th scope="col">Kierunek (azymut)</th>
+                <th scope="col">Kształt</th>
+                <th scope="col">Współrzędne</th>
+                <th scope="col">Działania</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var o in Model.Obszary)
+            {
+                <tr>
+                    <th scope="row">@o.Etykieta</th>
+                    <td>@o.Kierunek</td>
+                    <td>@o.Ksztalt</td>
+                    <td>@o.Wspolrzedne</td>
+                    <td>
+                        <ul class="dzialania">
+                            <li><a asp-action="EdytujObszar" asp-route-id="@o.Id">Edytuj<span class="visually-hidden"> obszar „@o.Etykieta”</span></a></li>
+                            <li><a asp-action="UsunObszar" asp-route-id="@o.Id">Usuń<span class="visually-hidden"> obszar „@o.Etykieta”</span></a></li>
+                        </ul>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<p><a asp-action="Index" asp-route-punkt="@Model.PunktRuchuId">Wróć do zdjęć: @Model.NazwaWlasciciela</a></p>

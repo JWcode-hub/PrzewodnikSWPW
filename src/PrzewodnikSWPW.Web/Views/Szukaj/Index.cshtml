@@ -1,0 +1,74 @@
+@model SzukajViewModel
+@{
+    var w = Model.Wynik;
+    var liczba = w?.Wyniki.Count ?? 0;
+
+    // Nagłówek (i tytuł strony) mówi od razu, ile jest wyników — czytnik odczyta to po przeładowaniu także bez JS.
+    var naglowek = w is null ? "Wyszukaj salę"
+        : liczba == 0 ? $"Nie znaleziono sali „{w.Fraza}”"
+        : $"Znaleziono {Odmiana.SaleBiernik(liczba)} dla frazy „{w.Fraza}”";
+    ViewData["Title"] = naglowek;
+
+    static string PierwszaMala(string t) => t.Length == 0 ? t : char.ToLowerInvariant(t[0]) + t[1..];
+}
+
+@* Jeden nagłówek dla obu stanów strony. Po wyszukaniu trafia na niego fokus (WF-13), a liczbę wyników
+   niesie on sam i tytuł strony — bez powtórki w aria-live. Atrybut wstawiany wyrażeniem: Razor nie pomija
+   atrybutów data-* o wartości null. *@
+<h1 id="naglowek-wynikow" tabindex="-1" @(w is null ? "" : "data-fokus-po-zaladowaniu")>@naglowek</h1>
+
+@if (w is null)
+{
+    <partial name="_FormularzSzukania" model="Model.Fraza" />
+}
+else
+{
+    @if (liczba > 0)
+    {
+        <ul class="lista-wynikow">
+            @foreach (var s in w.Wyniki)
+            {
+                <li>
+                    <h2 class="h4">@s.Symbol — @s.Nazwa</h2>
+                    <p>@s.NazwaPietra, @PierwszaMala(s.TypSali). @s.NazwaBudynku.</p>
+                    <ul class="linki-wyniku">
+                        <li><a asp-controller="Sala" asp-action="Index" asp-route-id="@s.Id">Pokaż salę @s.Symbol</a></li>
+                        <li><a asp-controller="Trasa" asp-action="Index" asp-route-do="@s.Id">Wyznacz trasę do sali @s.Symbol</a></li>
+                    </ul>
+                </li>
+            }
+        </ul>
+    }
+    else
+    {
+        @* Nigdy pusta strona: podpowiedź naprawy i alternatywna droga do celu (WCAG 3.3.3, UI-09). *@
+        <p>Sprawdź numer lub nazwę sali albo wybierz salę z listy.</p>
+
+        @if (w.Propozycje.Count > 0)
+        {
+            <h2>Czy chodziło o:</h2>
+            <ul>
+                @foreach (var s in w.Propozycje)
+                {
+                    <li><a asp-controller="Sala" asp-action="Index" asp-route-id="@s.Id">@s.Symbol — @s.Nazwa</a></li>
+                }
+            </ul>
+        }
+
+        <h2>Wszystkie sale</h2>
+        <ul>
+            @foreach (var b in w.Budynki)
+            {
+                <li><a asp-action="Sale" asp-route-kodBudynku="@b.Kod">Lista wszystkich sal: @b.Nazwa</a></li>
+            }
+        </ul>
+        <p>Jeśli nie możesz znaleźć sali, zapytaj w portierni budynku.</p>
+    }
+
+    <h2>Szukaj ponownie</h2>
+    <partial name="_FormularzSzukania" model="Model.Fraza" />
+}
+
+@section Scripts {
+    <script src="~/js/szukaj.js" asp-append-version="true"></script>
+}

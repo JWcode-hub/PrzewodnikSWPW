@@ -1,0 +1,14 @@
+@model KontaktAlternatywnyOptions
+@* Alternatywny sposób dostępu — art. 7 ustawy o dostępności cyfrowej (WN-37). *@
+<section aria-labelledby="naglowek-pomoc" class="komunikat">
+    <h2 id="naglowek-pomoc" class="h4">Jak inaczej uzyskać pomoc</h2>
+    <p>@Model.Opis</p>
+    @if (Model.TelefonHref is not null)
+    {
+        <p><a href="tel:@Model.TelefonHref">Zadzwoń do portierni: @Model.Telefon</a></p>
+    }
+    @if (!string.IsNullOrWhiteSpace(Model.Email))
+    {
+        <p><a href="mailto:@Model.Email">Napisz do portierni: @Model.Email</a></p>
+    }
+</section>

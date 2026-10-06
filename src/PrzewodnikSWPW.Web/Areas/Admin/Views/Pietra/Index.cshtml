@@ -1,0 +1,40 @@
+@model List<PietroWiersz>
+@{
+    ViewData["Title"] = "Piętra";
+}
+
+<h1>Piętra</h1>
+<partial name="_Komunikat" />
+<p><a asp-action="Nowe" class="btn btn-primary">Dodaj piętro</a></p>
+
+<table class="table tabela-admina">
+    <caption>Piętra budynków (@Model.Count)</caption>
+    <thead>
+        <tr>
+            <th scope="col">Budynek</th>
+            <th scope="col">Numer</th>
+            <th scope="col">Nazwa</th>
+            <th scope="col">Sal</th>
+            <th scope="col">Punktów ruchu</th>
+            <th scope="col">Działania</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var p in Model)
+        {
+            <tr>
+                <td>@p.KodBudynku</td>
+                <td>@p.Numer</td>
+                <th scope="row">@p.Nazwa</th>
+                <td>@p.LiczbaSal</td>
+                <td>@p.LiczbaPunktow</td>
+                <td>
+                    <ul class="dzialania">
+                        <li><a asp-action="Edytuj" asp-route-id="@p.Id">Edytuj<span class="visually-hidden"> piętro @p.Nazwa w budynku @p.KodBudynku</span></a></li>
+                        <li><a asp-action="Usun" asp-route-id="@p.Id">Usuń<span class="visually-hidden"> piętro @p.Nazwa w budynku @p.KodBudynku</span></a></li>
+                    </ul>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

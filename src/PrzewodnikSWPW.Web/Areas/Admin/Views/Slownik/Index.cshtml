@@ -1,0 +1,42 @@
+@model SlownikListaViewModel
+@{
+    ViewData["Title"] = Model.Tytul;
+}
+
+<h1>@Model.Tytul</h1>
+<partial name="_Komunikat" />
+<p><a asp-action="Nowa" class="btn btn-primary">Dodaj @Model.NazwaPozycji</a></p>
+
+<table class="table tabela-admina">
+    <caption>@Model.Tytul (@Model.Pozycje.Count)</caption>
+    <thead>
+        <tr>
+            <th scope="col">Nazwa</th>
+            <th scope="col">Opis</th>
+            @if (Model.MaIkone)
+            {
+                <th scope="col">Ikona</th>
+            }
+            <th scope="col">Działania</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var p in Model.Pozycje)
+        {
+            <tr>
+                <th scope="row">@p.Nazwa</th>
+                <td>@p.Opis</td>
+                @if (Model.MaIkone)
+                {
+                    <td>@p.Ikona</td>
+                }
+                <td>
+                    <ul class="dzialania">
+                        <li><a asp-action="Edytuj" asp-route-id="@p.Id">Edytuj<span class="visually-hidden"> @Model.NazwaPozycji @p.Nazwa</span></a></li>
+                        <li><a asp-action="Usun" asp-route-id="@p.Id">Usuń<span class="visually-hidden"> @Model.NazwaPozycji @p.Nazwa</span></a></li>
+                    </ul>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

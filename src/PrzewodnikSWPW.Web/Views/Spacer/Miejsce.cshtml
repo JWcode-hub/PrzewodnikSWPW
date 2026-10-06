@@ -1,0 +1,80 @@
+@model MiejsceViewModel
+@{
+    var m = Model.Miejsce;
+    // Komunikat o braku przejścia niesie tytuł (czytany po przeładowaniu, także bez JavaScriptu)
+    // oraz sam komunikat pod listą kierunków, na który trafia fokus — nie obszar aria-live.
+    ViewData["Title"] = Model.Komunikat is null ? m.Nazwa : $"Brak przejścia – {m.Nazwa}";
+
+    static string Zrodlo(string sciezka) => sciezka.StartsWith('/') ? sciezka : $"/media/{sciezka}";
+}
+
+@* Kolejność elementów jest stała (UI-02, 06 §2.2): nagłówek → opis → zdjęcie → kierunki. *@
+<h1 id="naglowek-miejsca" tabindex="-1" @(Model.Komunikat is null ? "data-fokus-po-zaladowaniu" : "")>@m.Nazwa</h1>
+
+<p id="opis-miejsca">@(m.Opis ?? m.OpisGlosowy)</p>
+<partial name="_PanelMowy" model="m.OpisGlosowy ?? m.Opis" />
+
+@* Zdjęcie po opisie: opis jest czytelny, zanim zdjęcie się doczyta, a width/height rezerwują miejsce,
+   więc tekst niżej nie przeskakuje (P-13, D-10). *@
+@foreach (var (naEkranie, i) in Model.Zdjecia.Select((z, i) => (z, i)))
+{
+    var zdjecie = naEkranie.Zdjecie;
+    var mapa = naEkranie.Obszary.Count > 0 ? $"obszary-zdjecia-{i + 1}" : null;
+    <figure>
+        <img src="@Zrodlo(zdjecie.SciezkaPliku)"
+             alt="@(zdjecie.CzyDekoracyjne ? "" : zdjecie.TekstAlternatywny)"
+             width="@zdjecie.Szerokosc" height="@zdjecie.Wysokosc"
+             class="img-fluid"
+             loading="@(i == 0 ? "eager" : "lazy")" decoding="async"
+             usemap="@(mapa is null ? null : $"#{mapa}")" />
+        @if (mapa is not null)
+        {
+            @* Aktywne obszary to dodatek (WF-27): każdy prowadzi tam, gdzie link z listy kierunków niżej,
+               która pozostaje podstawowym sposobem nawigacji. alt = etykieta — bez niej obszar jest niewidoczny dla czytnika. *@
+            <map name="@mapa" id="@mapa">
+                @foreach (var o in naEkranie.Obszary)
+                {
+                    <area shape="@o.Ksztalt" coords="@o.Wspolrzedne" data-wspolrzedne="@o.Wspolrzedne" href="@o.Href" alt="@o.Etykieta" />
+                }
+            </map>
+        }
+        @if (!zdjecie.CzyDekoracyjne)
+        {
+            <figcaption>@(zdjecie.OpisRozszerzony ?? $"Zdjęcie miejsca: {m.Nazwa}.")</figcaption>
+        }
+    </figure>
+}
+
+<h2>Dokąd chcesz pójść?</h2>
+<ul class="lista-kierunkow">
+    @foreach (var k in Model.Kierunki)
+    {
+        <li data-kierunek="@k.Parametr">
+            @if (k.Href is not null)
+            {
+                <a href="@k.Href" class="kierunek">@k.Tekst</a>
+            }
+            else
+            {
+                @* Kierunek bez przejścia: NIE link i NIE wyłączony przycisk — zwykły tekst, który czytnik zawsze przeczyta. *@
+                <span class="kierunek kierunek--brak">@k.Tekst</span>
+            }
+        </li>
+    }
+</ul>
+
+@if (Model.Komunikat is not null)
+{
+    @* Nie przeszedłeś do nowego miejsca, więc fokus trafia tu, a nie na nazwę miejsca; lista kierunków jest tuż wyżej. *@
+    <p class="komunikat komunikat--blad" tabindex="-1" data-fokus-po-zaladowaniu>@Model.Komunikat</p>
+}
+
+<nav aria-label="Nawigacja pomocnicza spaceru" class="mt-4">
+    <p>@m.NazwaBudynku, @(char.ToLowerInvariant(m.NazwaPietra[0]) + m.NazwaPietra[1..]).</p>
+    <p><a href="@Model.AdresBudynku">Wybierz inne miejsce startowe w budynku @m.Adres.KodBudynku</a></p>
+</nav>
+
+@section Scripts {
+    <script src="~/js/spacer.js" asp-append-version="true"></script>
+    <script src="~/js/mowa.js" asp-append-version="true"></script>
+}

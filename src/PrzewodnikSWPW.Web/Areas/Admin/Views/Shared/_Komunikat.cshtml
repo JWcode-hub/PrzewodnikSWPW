@@ -1,0 +1,7 @@
+@* Komunikat po udanej operacji (PRG). Po przeładowaniu trafia na niego fokus (site.js) — czytnik czyta go raz,
+   a Tab prowadzi dalej do tabeli; także po usunięciu wiersza fokus nie zostaje na początku strony.
+   Bez JavaScriptu o wyniku mówi tytuł strony („Zapisano – …”, _LayoutAdmina). *@
+@if (ViewData["Komunikat"] is string komunikat)
+{
+    <p class="komunikat komunikat--sukces" tabindex="-1" data-fokus-po-zaladowaniu>@komunikat</p>
+}

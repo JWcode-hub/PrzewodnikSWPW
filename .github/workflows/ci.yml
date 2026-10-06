@@ -1,0 +1,80 @@
+# Ciągła integracja (05 §7.4, 06 §6.1). Czerwony wynik któregokolwiek kroku = pull request nie do scalenia;
+# samo zablokowanie scalania ustawia się w GitHubie: Settings → Branches → reguła dla main →
+# „Require status checks to pass before merging” → zadanie „build-and-test”.
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      DOTNET_NOLOGO: true
+      DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Przywrócenie pakietów
+        run: dotnet restore
+
+      - name: Kompilacja (ostrzeżenie = błąd)
+        run: dotnet build --no-restore -warnaserror
+
+      # Prawdziwy SQL Server, jak w testach lokalnych na LocalDB — ograniczenia CHECK i klucze obce
+      # sprawdza silnik, nie atrapa. Hasło jest losowe i żyje tylko w tym przebiegu (nigdy w repozytorium).
+      - name: SQL Server 2022 w kontenerze
+        run: |
+          HASLO="Ci-$(openssl rand -hex 16)-aA1!"
+          echo "::add-mask::$HASLO"
+          docker run -d --name sql -e ACCEPT_EULA=Y -e MSSQL_SA_PASSWORD="$HASLO" -p 1433:1433 mcr.microsoft.com/mssql/server:2022-latest
+          for proba in $(seq 1 30); do
+            if docker exec sql /opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P "$HASLO" -Q "SELECT 1" > /dev/null 2>&1; then
+              echo "SQL Server gotowy po $proba próbach."
+              break
+            fi
+            if [ "$proba" = 30 ]; then docker logs sql; exit 1; fi
+            sleep 2
+          done
+          echo "PRZEWODNIK_TESTY_SERWER=Server=localhost,1433;User Id=sa;Password=$HASLO;TrustServerCertificate=True" >> "$GITHUB_ENV"
+
+      # P-14: migracje muszą się wykonać od zera, a model nie może wyprzedzać ostatniej migracji.
+      - name: Migracje EF Core na czystej bazie
+        run: |
+          dotnet tool restore
+          export ConnectionStrings__Default="$PRZEWODNIK_TESTY_SERWER;Database=PrzewodnikSWPW_CI_Migracje"
+          dotnet ef database update --project src/PrzewodnikSWPW.Web --no-build
+          dotnet ef migrations has-pending-model-changes --project src/PrzewodnikSWPW.Web --no-build
+
+      - name: Testy jednostkowe i integracyjne
+        run: dotnet test tests/PrzewodnikSWPW.UnitTests --no-build --logger "trx;LogFileName=jednostkowe.trx" --results-directory wyniki-testow
+
+      - name: Przeglądarka Chromium dla Playwright
+        run: pwsh tests/PrzewodnikSWPW.A11yTests/bin/Debug/net10.0/playwright.ps1 install --with-deps chromium
+
+      # Zielony wynik axe-core to ok. 30–40% problemów dostępności — nie zastępuje testu z czytnikiem
+      # ekranu ani z użytkownikiem (README „Testy przed wydaniem”, docs/RAPORT_CZYTNIK.md).
+      - name: Testy dostępności (Playwright + axe-core)
+        run: dotnet test tests/PrzewodnikSWPW.A11yTests --no-build --logger "trx;LogFileName=dostepnosc.trx" --results-directory wyniki-testow
+
+      - name: Wyniki testów
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wyniki-testow
+          path: wyniki-testow
+          if-no-files-found: ignore

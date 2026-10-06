@@ -1,5 +1,23 @@
+@inject PrzewodnikSWPW.Web.Services.UstawieniaDostepnosciService UstawieniaDostepnosci
+@{
+    var u = UstawieniaDostepnosci.Pobierz();
+    var motyw = u.Motyw switch
+    {
+        Motyw.Podstawowy => "podstawowy",
+        Motyw.WysokiKontrast => "wysoki-kontrast",
+        Motyw.Ciemny => "ciemny",
+        _ => "systemowy",
+    };
+    var powrot = Context.Request.Path + Context.Request.QueryString;
+}
 <!DOCTYPE html>
-<html lang="pl">
+<html lang="pl"
+      data-motyw="@motyw"
+      data-rozmiar="@u.RozmiarTekstu"
+      data-animacje="@(u.OgraniczAnimacje ? "ograniczone" : "pelne")"
+      data-mowa="@(u.MowaWlaczona ? "wlaczona" : "wylaczona")"
+      data-tempo-mowy="@u.TempoMowy"
+      data-skroty="@(u.SkrotyWlaczone ? "wlaczone" : "wylaczone")">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -11,18 +29,72 @@
 <body>
     <a href="#tresc" class="link-pomin">Przejdź do treści głównej</a>
 
-    <header class="border-bottom mb-3">
-        <nav class="container py-2" aria-label="Nawigacja główna">
-            <a class="nazwa-serwisu" asp-controller="Home" asp-action="Index">Multimedialny przewodnik po Uczelni</a>
-        </nav>
+    <header class="naglowek-serwisu">
+        <div class="container">
+            <nav aria-label="Nawigacja główna">
+                <ul class="lista-nawigacji">
+                    <li><a class="nazwa-serwisu" asp-area="" asp-controller="Home" asp-action="Index">Multimedialny przewodnik po Uczelni</a></li>
+                    <li><a asp-area="" asp-controller="Spacer" asp-action="Index">Spacer po budynkach</a></li>
+                    <li><a asp-area="" asp-controller="Szukaj" asp-action="Index">Szukaj sali</a></li>
+                    <li><a asp-area="" asp-controller="Trasa" asp-action="Index">Wyznacz trasę</a></li>
+                    @* Pozycje konta na końcu listy i przy prawej krawędzi (klasa nawigacja-konto na pierwszej z nich). *@
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        var administrator = User.IsInRole(Role.Administrator);
+                        @if (administrator)
+                        {
+                            <li class="nawigacja-konto"><a asp-area="Admin" asp-controller="Panel" asp-action="Index">Panel administratora</a></li>
+                        }
+                        <li class="@(administrator ? null : "nawigacja-konto")">
+                            <form method="post" asp-area="" asp-controller="Konto" asp-action="Wylogowanie" class="formularz-wylogowania">
+                                <button type="submit" class="btn btn-secondary btn-sm">Wyloguj się<span class="visually-hidden"> (@User.Identity.Name)</span></button>
+                            </form>
+                        </li>
+                    }
+                    else
+                    {
+                        @* /admin wymaga logowania, więc niezalogowanego przenosi na stronę logowania i wraca po niej do panelu. *@
+                        <li class="nawigacja-konto"><a asp-area="Admin" asp-controller="Panel" asp-action="Index">Zaloguj się do panelu administratora</a></li>
+                    }
+                </ul>
+            </nav>
+        </div>
     </header>
 
-    <main id="tresc" tabindex="-1" class="container pb-3">
+    @await RenderSectionAsync("PrzedTrescia", required: false)
+
+    <main id="tresc" tabindex="-1" class="container py-3">
         @RenderBody()
+
+        @* Jeden obszar ogłoszeń na stronę, obecny w DOM od załadowania i pusty (06 §3.2). *@
+        <div id="komunikaty" role="status" aria-live="polite" aria-atomic="true"></div>
     </main>
 
-    <footer class="border-top mt-4">
-        <div class="container py-3">
+    <footer class="stopka-serwisu">
+        <div class="container">
+            <nav aria-label="Informacje prawne">
+                <ul class="lista-stopki">
+                    <li><a href="/deklaracja-dostepnosci">Deklaracja Dostępności</a></li>
+                    <li><a href="/skroty-klawiszowe">Skróty klawiszowe</a></li>
+                    <li><a href="/zglos-problem">Zgłoś brak dostępności</a></li>
+                    <li><a href="/polityka-prywatnosci">Polityka prywatności</a></li>
+                    <li><a asp-area="" asp-controller="Ustawienia" asp-action="Index">Ustawienia dostępności</a></li>
+                </ul>
+            </nav>
+
+            @* Przełącznik motywu na każdej stronie (06 §5.1). Bez automatycznego wysyłania po zmianie — WCAG 3.2.2. *@
+            <form method="post" asp-area="" asp-controller="Ustawienia" asp-action="Motyw" class="przelacznik-motywu">
+                <input type="hidden" name="powrot" value="@powrot" />
+                <label for="stopka-motyw">Motyw kolorystyczny</label>
+                <select id="stopka-motyw" name="motyw" class="form-select">
+                    @foreach (var (wartosc, nazwa, _) in UstawieniaViewModel.Motywy)
+                    {
+                        <option value="@wartosc" selected="@(wartosc == u.Motyw)">@nazwa</option>
+                    }
+                </select>
+                <button type="submit" class="btn btn-secondary">Zmień motyw</button>
+            </form>
+
             <p class="mb-0">Szkoła Wyższa im. Pawła Włodkowica w Płocku</p>
         </div>
     </footer>
