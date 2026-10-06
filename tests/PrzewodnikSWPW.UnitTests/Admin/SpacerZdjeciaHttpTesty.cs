@@ -11,7 +11,7 @@ namespace PrzewodnikSWPW.UnitTests.Admin;
 public class SpacerZdjeciaHttpTesty(AplikacjaFixture app)
 {
     [Fact]
-    public async Task EkranMiejsca_OpisPrzedZdjeciem_WymiaryIMapaObszarow_ObszarTylkoDlaMozliwegoKierunku()
+    public async Task EkranMiejsca_ZdjeciePrzedOpisem_WymiaryIMapaObszarow_ObszarTylkoDlaMozliwegoKierunku()
     {
         await using var db = app.Baza.UtworzKontekst();
         // Punkt z kierunkiem nieaktywnym (ściana z gablotą) i co najmniej jednym aktywnym.
@@ -39,11 +39,13 @@ public class SpacerZdjeciaHttpTesty(AplikacjaFixture app)
             Assert.Equal(HttpStatusCode.OK, odpowiedz.StatusCode);
             var html = await odpowiedz.Content.ReadAsStringAsync();
 
-            // Kolejność: opis → zdjęcie → lista kierunków (UI-02, P-13 pkt 4).
-            var opis = html.IndexOf("id=\"opis-miejsca\"");
+            // Kolejność w kodzie: nagłówek → zdjęcie → opis → lista przejść (UI-02, D-13).
+            var naglowek = html.IndexOf("id=\"naglowek-miejsca\"");
             var figura = html.IndexOf("<figure>");
+            var opis = html.IndexOf("id=\"opis-miejsca\"");
             var lista = html.IndexOf("class=\"lista-kierunkow\"");
-            Assert.True(opis >= 0 && opis < figura && figura < lista, "Opis musi stać przed zdjęciem, a zdjęcie przed listą kierunków.");
+            Assert.True(naglowek >= 0 && naglowek < figura && figura < opis && opis < lista,
+                "Kolejność w kodzie: nagłówek, zdjęcie, opis, lista przejść.");
 
             var img = Regex.Match(html, "<img [^>]*test-spacer\\.jpg[^>]*>").Value;
             Assert.Contains("width=\"640\"", img);

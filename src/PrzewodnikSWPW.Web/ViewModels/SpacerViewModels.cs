@@ -11,9 +11,10 @@ public sealed record BudynekViewModel(
 
 /// <summary>
 /// Pozycja listy kierunków. <see cref="Href"/> = <c>null</c> oznacza brak przejścia — widok renderuje
-/// wtedy zwykły tekst (&lt;span&gt;), nie wyłączony przycisk (06 §2.2).
+/// wtedy zwykły tekst (&lt;span&gt;), nie wyłączony przycisk (06 §2.2). Na ekranie dwa widoczne wiersze:
+/// <see cref="Nazwa"/> (czynność i cel) oraz <see cref="Szczegol"/> (rodzaj przejścia, odległość, opis).
 /// </summary>
-public sealed record KierunekNaEkranie(string Parametr, string Tekst, string? Href);
+public sealed record KierunekNaEkranie(string Parametr, string Tekst, string? Href, string Nazwa, string? Szczegol);
 
 public sealed record MiejsceViewModel(
     WidokMiejsca Miejsce,

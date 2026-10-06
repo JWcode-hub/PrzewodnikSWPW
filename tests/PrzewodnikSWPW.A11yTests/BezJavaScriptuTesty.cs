@@ -61,7 +61,7 @@ public class BezJavaScriptuTesty(AplikacjaFixture app)
         await strona.GetByRole(AriaRole.Button, new() { Name = "Wyznacz trasę" }).ClickAsync();
 
         Assert.Equal("Trasa z sali A12 do sali A15", await strona.Locator("h1").InnerTextAsync());
-        Assert.True(await strona.Locator("ol.lista-krokow > li").CountAsync() >= 2);
+        Assert.True(await strona.Locator("ol.trasa > li").CountAsync() >= 2);
     }
 
     [Fact]

@@ -1,4 +1,5 @@
 @model WynikTrasyViewModel
+@inject UstawieniaDostepnosciService UstawieniaDostepnosci
 @{
     var w = Model.Wynik;
     var zDo = w.SalaZ is not null && w.SalaDo is not null ? $"z sali {w.SalaZ.Symbol} do sali {w.SalaDo.Symbol}" : null;
@@ -12,6 +13,16 @@
         _ => "Nie można wyznaczyć trasy",
     };
     ViewData["Title"] = naglowek;
+
+    // Przyciski odczytu kroków istnieją tylko po włączeniu mowy w ustawieniach (D-11).
+    var mowa = UstawieniaDostepnosci.Pobierz().MowaWlaczona;
+
+    static string Rola(RolaKroku rola) => rola switch
+    {
+        RolaKroku.Poczatek => "Początek trasy",
+        RolaKroku.Cel => "Punkt docelowy",
+        _ => "",
+    };
 }
 
 <h1 id="naglowek-trasy" tabindex="-1" data-fokus-po-zaladowaniu>@naglowek</h1>
@@ -34,18 +45,55 @@
         <p><strong>Uwaga: ta trasa prowadzi po schodach.</strong> Odcinki ze schodami są oznaczone słowem „Schody”.</p>
     }
 
-    <p>
-        Długość trasy: @NawigacjaService.Metry(trasa.DlugoscMetry).
-        Liczba kroków: @trasa.LiczbaKrokow.
-        Szacowany czas przejścia: @WynikTrasyViewModel.SzacowanyCzas(trasa.CzasSekundy).
-        @(w.TrybWindy && !trasa.CzyZawieraSchody ? "Trasa bez schodów." : trasa.CzyZawieraSchody ? "Trasa zawiera schody." : "")
-    </p>
+    <div class="podsumowanie-trasy">
+        <dl>
+            <div><dt>Długość:</dt><dd>@NawigacjaService.Metry(trasa.DlugoscMetry)</dd></div>
+            <div><dt>Kroki:</dt><dd>@trasa.LiczbaKrokow</dd></div>
+            <div><dt>Czas:</dt><dd>@WynikTrasyViewModel.SzacowanyCzas(trasa.CzasSekundy)</dd></div>
+            <div><dt>Tryb windy:</dt><dd>@(w.TrybWindy ? "włączony" : "wyłączony")</dd></div>
+            <div><dt>Schody:</dt><dd>@(trasa.CzyZawieraSchody ? "trasa zawiera schody" : "trasa bez schodów")</dd></div>
+        </dl>
+    </div>
 
     <h2 class="@(w.Rodzaj == RodzajWynikuTrasy.TylkoZeSchodami ? "h4" : null)">Kolejne kroki</h2>
-    <ol class="lista-krokow">
+
+    @if (mowa)
+    {
+        @* Dźwięk dłuższy niż 3 sekundy musi dać się zatrzymać (WCAG 1.4.2). Atrybut hidden zdejmuje mowa.js:
+           bez JavaScriptu przyciski nic by nie robiły. *@
+        <div id="panel-mowy" class="panel-mowy" hidden>
+            <button type="button" id="btn-zatrzymaj" class="btn btn-secondary">Zatrzymaj czytanie</button>
+            <p id="mowa-komunikat" class="komunikat" hidden></p>
+        </div>
+    }
+
+    @* Oś czasu: pierwszy wiersz to punkt startowy, każdy następny to jeden odcinek. Kropki i linię rysuje
+       wyłącznie CSS (::before, ::after) — w kodzie nie ma elementów, które czytnik musiałby pomijać. *@
+    <ol class="trasa">
         @foreach (var krok in trasa.Instrukcje)
         {
-            <li>@if (krok.CzySchody) {<strong>Schody. </strong>}@krok.Tekst</li>
+            <li>
+                <div class="krok">
+                    <span class="krok__punkt">
+                        @krok.NazwaPunktu
+                        @if (krok.Rola != RolaKroku.Posredni)
+                        {
+                            <span class="krok__rola">@Rola(krok.Rola)</span>
+                        }
+                    </span>
+                    <p class="krok__instrukcja">
+                        @if (krok.CzySchody) {<strong>Schody. </strong>}@krok.Tekst
+                        @if (krok.Metry is decimal metry && krok.Rodzaj is { } rodzaj)
+                        {
+                            <span class="krok__dystans">@rodzaj, @NawigacjaService.Metry(metry)</span>
+                        }
+                    </p>
+                    @if (mowa)
+                    {
+                        <button type="button" class="btn btn-secondary btn-mowa" data-czytaj="@($"{krok.NazwaPunktu}. {krok.Tekst}")" hidden>Przeczytaj ten krok<span class="visually-hidden">: @krok.NazwaPunktu</span></button>
+                    }
+                </div>
+            </li>
         }
     </ol>
 }
@@ -58,3 +106,7 @@
     }
     <li><a href="@Model.AdresFormularza">Zmień salę początkową lub docelową</a></li>
 </ul>
+
+@section Scripts {
+    <script src="~/js/mowa.js" asp-append-version="true"></script>
+}

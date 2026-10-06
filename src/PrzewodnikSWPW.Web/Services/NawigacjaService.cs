@@ -165,19 +165,28 @@ public sealed class NawigacjaService(INawigacjaRepozytorium repozytorium, TimePr
 
         if (krawedz is null)
         {
-            return new OpcjaKierunku(wzgledny, false, $"{strona} — brak przejścia.", null, null, null, null);
+            return new OpcjaKierunku(wzgledny, false, $"{strona} — brak przejścia.", null, null, null, null,
+                Nazwa: $"{strona} — brak przejścia.");
         }
 
         var przeszkoda = Przeszkoda(krawedz, teraz);
         if (przeszkoda is not null)
         {
             return new OpcjaKierunku(wzgledny, false, $"{strona} — brak przejścia. {przeszkoda}".TrimEnd(),
-                null, null, null, krawedz.OpisPrzejscia);
+                null, null, null, krawedz.OpisPrzejscia,
+                Nazwa: $"{strona} — brak przejścia.", Szczegol: przeszkoda.Length == 0 ? null : przeszkoda);
         }
 
-        var tekst = $"{Azymuty.Etykieta(wzgledny)} — {NazwaCelu(krawedz)}, {Metry(krawedz.Waga)}";
+        var nazwa = $"{Azymuty.Etykieta(wzgledny)} — {NazwaCelu(krawedz)}";
+        var tekst = $"{nazwa}, {Metry(krawedz.Waga)}";
+        var szczegol = $"{krawedz.RodzajPrzejscia}, {Metry(krawedz.Waga)}.";
+        if (!string.IsNullOrWhiteSpace(krawedz.OpisPrzejscia))
+        {
+            szczegol += " " + krawedz.OpisPrzejscia.Trim();
+        }
+
         return new OpcjaKierunku(wzgledny, true, tekst,
-            krawedz.PunktDocelowyId, krawedz.SalaDocelowaId, krawedz.Waga, krawedz.OpisPrzejscia, krawedz.Id);
+            krawedz.PunktDocelowyId, krawedz.SalaDocelowaId, krawedz.Waga, krawedz.OpisPrzejscia, krawedz.Id, nazwa, szczegol);
     }
 
     /// <summary>

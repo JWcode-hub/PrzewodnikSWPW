@@ -105,9 +105,12 @@ public class StronyKluczoweTesty(AplikacjaFixture app)
         var naUstawieniach = await Strony.PowazneNaruszeniaAxe(strona);
         await strona.GotoAsync(Strony.Miejsce);
         var naMiejscu = await Strony.PowazneNaruszeniaAxe(strona);
+        await strona.GotoAsync(await Strony.AdresTrasy(app));
+        var naTrasie = await Strony.PowazneNaruszeniaAxe(strona);
 
         Assert.True(naUstawieniach.Count == 0, $"ustawienia, motyw {motyw}:\n{string.Join("\n", naUstawieniach)}");
         Assert.True(naMiejscu.Count == 0, $"ekran miejsca, motyw {motyw}:\n{string.Join("\n", naMiejscu)}");
+        Assert.True(naTrasie.Count == 0, $"oś trasy, motyw {motyw}:\n{string.Join("\n", naTrasie)}");
     }
 
     /// <summary>Panel mowy pojawia się dopiero po włączeniu w ustawieniach — sprawdzamy także ten stan strony.</summary>
@@ -125,5 +128,41 @@ public class StronyKluczoweTesty(AplikacjaFixture app)
         Assert.True(await strona.GetByRole(AriaRole.Button, new() { Name = "Zatrzymaj czytanie" }).IsVisibleAsync());
         var naruszenia = await Strony.PowazneNaruszeniaAxe(strona);
         Assert.True(naruszenia.Count == 0, string.Join("\n", naruszenia));
+
+        // Oś trasy: przycisk przy każdym kroku i jeden przycisk zatrzymania, wszystkie widoczne po uruchomieniu skryptu.
+        await strona.GotoAsync(await Strony.AdresTrasy(app));
+        var kroki = await strona.Locator("ol.trasa > li").CountAsync();
+        var przyciski = strona.Locator("ol.trasa button[data-czytaj]:visible");
+        Assert.Equal(kroki, await przyciski.CountAsync());
+        // Nazwa przycisku w drzewie dostępności niesie nazwę punktu — pięć przycisków „Przeczytaj ten krok” byłoby nierozróżnialnych.
+        var drzewo = await strona.Locator("ol.trasa > li").First.AriaSnapshotAsync();
+        Assert.Matches("button \"Przeczytaj ten krok ?: \\S", drzewo);
+        Assert.True(await strona.GetByRole(AriaRole.Button, new() { Name = "Zatrzymaj czytanie" }).IsVisibleAsync());
+        naruszenia = await Strony.PowazneNaruszeniaAxe(strona);
+        Assert.True(naruszenia.Count == 0, string.Join("\n", naruszenia));
+    }
+
+    /// <summary>Dwie kolumny układa CSS: na szerokim ekranie przejścia stoją obok opisu, na wąskim pod nim — bez przewijania w poziomie.</summary>
+    [Theory]
+    [InlineData(1280, true)]
+    [InlineData(360, false)]
+    public async Task EkranMiejsca_UkladDwukolumnowyNaSzerokimEkranie_JednaKolumnaNaWaskim(int szerokosc, bool dwieKolumny)
+    {
+        var strona = await app.NowaStrona();
+        await strona.SetViewportSizeAsync(szerokosc, 800);
+        await strona.GotoAsync(Strony.Miejsce);
+
+        var opis = await strona.Locator("#opis-miejsca").BoundingBoxAsync();
+        var lista = await strona.Locator(".lista-kierunkow").BoundingBoxAsync();
+        Assert.NotNull(opis);
+        Assert.NotNull(lista);
+
+        Assert.Equal(dwieKolumny, lista.X >= opis.X + opis.Width);   // obok opisu…
+        Assert.Equal(!dwieKolumny, lista.Y >= opis.Y + opis.Height); // …albo pod nim
+        // Reflow (WCAG 1.4.10): żadnego przewijania poziomego, także na 360 px.
+        Assert.True(await strona.EvaluateAsync<bool>("() => document.documentElement.scrollWidth <= document.documentElement.clientWidth"));
+        // Oba wiersze każdego przejścia są widoczne.
+        Assert.True(await strona.Locator(".lista-kierunkow a .kierunek__nazwa").First.IsVisibleAsync());
+        Assert.True(await strona.Locator(".lista-kierunkow a .kierunek__szczegol").First.IsVisibleAsync());
     }
 }

@@ -334,32 +334,167 @@ legend {
 }
 
 /* --- 9a. Lista kierunków na ekranie miejsca (06 §2.2, UI-03, UI-08) -------
-   Jedna kolumna, pełna szerokość, cel min. 48 px. Kierunek bez przejścia jest zwykłym tekstem
-   z przerywaną ramką — różni się od linku kształtem ramki i brakiem podkreślenia, nie tylko kolorem. */
+   Pozycje oddzielone liniami, każda na pełną szerokość kolumny, cel min. 48 px. Dwa wiersze: nazwa
+   (czynność i cel) i szczegół. Kierunek bez przejścia jest zwykłym tekstem — różni się od linku
+   kursywą, brakiem pogrubienia i brakiem podkreślenia, nie kolorem (WCAG 1.4.1).
+   Kolory wyłącznie ze zmiennych motywu: bez osobnego „szarego” — w motywie czarno-żółtym by zniknął. */
 .lista-kierunkow {
   list-style: none;
   padding: 0;
   margin: 0 0 1.5rem;
-  display: grid;
-  gap: 0.75rem;
-  max-width: 40rem;
+  border-top: 2px solid var(--kolor-obramowanie);
+}
+.lista-kierunkow > li {
+  border-bottom: 2px solid var(--kolor-obramowanie);
 }
 .lista-kierunkow .kierunek {
   display: block;
   min-height: 3rem;
-  padding: 0.75rem 1rem;
-  border: 2px solid var(--kolor-tekst);
+  padding: 0.9rem 0.75rem;
+  color: var(--kolor-tekst);
 }
 .lista-kierunkow a.kierunek {
   font-weight: 700;
 }
 .lista-kierunkow a.kierunek:hover {
-  background-color: var(--kolor-tekst);
-  color: var(--kolor-tlo);
+  background-color: var(--kolor-tlo-pomocnicze);
+  text-decoration-thickness: 0.2em;      /* w motywie czarno-żółtym tło pomocnicze = tło, więc także grubsze podkreślenie */
 }
-.lista-kierunkow .kierunek--brak {
-  border-style: dashed;
-  border-color: var(--kolor-obramowanie);
+.kierunek__nazwa,
+.kierunek__szczegol {
+  display: block;
+}
+/* Podkreślona jest tylko nazwa; szczegół to zwykły tekst w tym samym linku. */
+.lista-kierunkow a.kierunek:has(.kierunek__nazwa) {
+  text-decoration: none;
+}
+.lista-kierunkow a.kierunek .kierunek__nazwa {
+  text-decoration: underline;
+  text-decoration-thickness: inherit;
+}
+.kierunek__szczegol {
+  font-size: 0.95rem;
+  font-weight: 400;
+}
+.lista-kierunkow .kierunek--brak .kierunek__nazwa {
+  font-style: italic;
+  font-weight: 400;
+}
+
+/* Ekran miejsca: zdjęcie i opis po lewej, przejścia po prawej. Kolejność w kodzie = kolejność na ekranie
+   (z góry na dół, potem prawa kolumna); na wąskim ekranie i przy dużym powiększeniu jedna kolumna. */
+.uklad-miejsca {
+  display: grid;
+  gap: 2rem;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  align-items: start;
+}
+@media (max-width: 54em) {
+  .uklad-miejsca {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.uklad-miejsca figure {
+  margin: 0 0 1.5rem;
+}
+.uklad-miejsca figure img {
+  display: block;
+  border: 2px solid var(--kolor-obramowanie);
+  border-radius: 4px;
+}
+.uklad-miejsca figcaption {
+  font-size: 0.95rem;
+  margin-top: 0.5rem;
+}
+
+/* --- 9a-bis. Trasa: podsumowanie i oś czasu --------------------------------
+   Kropki i linia to pseudoelementy rysowane OBRAMOWANIEM, nie tłem — obramowania zostają w trybie
+   wymuszonych kolorów systemu (Windows High Contrast), a tła znikają. */
+.podsumowanie-trasy {
+  background-color: var(--kolor-tlo-pomocnicze);
+  border: 2px solid var(--kolor-obramowanie);
+  border-radius: 4px;
+  padding: 0.75rem 1rem;
+  margin: 0 0 1.75rem;
+}
+.podsumowanie-trasy dl {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.75rem;
+  margin: 0;
+}
+.podsumowanie-trasy dl > div {
+  display: flex;
+  flex-wrap: wrap;
+}
+.podsumowanie-trasy dt {
+  font-weight: 700;
+}
+.podsumowanie-trasy dd {
+  margin: 0 0 0 0.35rem;
+}
+
+.trasa {
+  list-style: none;
+  margin: 0 0 1.5rem;
+  padding: 0;
+}
+.trasa > li {
+  position: relative;
+  padding: 0 0 2.25rem 2.75rem;
+}
+/* Kropka kroku. */
+.trasa > li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.4rem;
+  border: 0.575rem solid var(--kolor-akcent);
+  border-radius: 50%;
+}
+/* Początek i cel: pierścień wokół kropki. */
+.trasa > li:first-child::before,
+.trasa > li:last-child::before {
+  box-shadow: 0 0 0 4px var(--kolor-tlo), 0 0 0 7px var(--kolor-akcent);
+}
+/* Linia do następnego kroku — zaczyna się pod pierścieniem i kończy przed następną kropką. */
+.trasa > li::after {
+  content: "";
+  position: absolute;
+  left: 0.48rem;
+  top: 2.3rem;
+  bottom: 0.7rem;
+  border-left: 3px solid var(--kolor-obramowanie);
+}
+.trasa > li:last-child::after {
+  display: none;
+}
+.krok {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) auto;
+  gap: 0.35rem 1.5rem;
+  align-items: start;
+}
+@media (max-width: 54em) {
+  .krok {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: start;
+  }
+}
+.krok__punkt {
+  font-weight: 700;
+}
+.krok__rola,
+.krok__dystans {
+  display: block;
+  font-size: 0.95rem;
+  font-weight: 400;
+}
+.krok__instrukcja {
+  margin: 0;
+}
+.btn-mowa {
+  white-space: nowrap;
 }
 
 /* --- 9b. Wyszukiwanie sal i podpowiedzi (combobox) -----------------------
